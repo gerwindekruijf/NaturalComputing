@@ -12,55 +12,55 @@ def closer_to_goal(x, goal):
     return count
 
 
-def one_plus_one_ga(l, iter):
+def one_plus_one_ga(l, iter, mode):
     p = 1/l if l > 0 else 1
     x = bitarray(l)
     goal = bitarray(l)
     goal.setall(True)
+
     fitness_scores = []
+    success = 0
+    converged = False
 
     for i in range(1, iter):
         x_m = x.copy()
-        txt_file = open("log-file-2.txt", 'a')
+        txt_file = open("log-file.txt", 'a')
 
         for j, xj in enumerate(x_m):
             if r.random() < p:
                 x_m[j] = not xj
 
-        
-        if x_m == goal:
-            print(f"Succeeded in {i} iterations")
+        if x_m == goal and not converged:
             txt_file.write(f"Succeeded in {i} iterations\n")
-            return
+            converged = True
         
-        '''
-        score = closer_to_goal(x_m, goal)
-        # print(score)
-        
-        if score >= closer_to_goal(x, goal):
-            fitness_scores.append(score)
-            x = x_m
+        if mode:
+            score_x_m = closer_to_goal(x_m, goal)
+            score_x = closer_to_goal(x, goal)
+            if score_x_m >= score_x:
+                fitness_scores.append(score_x_m)
+                x = x_m
+            else:
+                fitness_scores.append(score_x)
         else:
-            fitness_scores.append(closer_to_goal(x, goal))
-        '''
-        
-        x = x_m
-        score = closer_to_goal(x_m, goal)
-        fitness_scores.append(score)
-        
-        # print(score)
+            x = x_m
+            score = closer_to_goal(x_m, goal)
+            fitness_scores.append(score)
     
-    print(f"Not succeeded in {iter} iterations")
-    txt_file.write(f"Not succeeded in {iter} iterations\n")
+    if not converged:
+        txt_file.write(f"Not succeeded in {iter} iterations\n")
+
     return fitness_scores
 
 
+def plot(l, iter):
+    scores = one_plus_one_ga(l, iter, True)
+    plt.plot([x for x in range(1,iter)], scores)
+    plt.title("Fitness scores for elapsed iterations")
+    plt.xlabel("Iteration x")
+    plt.ylabel("Fitness score")
+    plt.show()
+
+
 for i in range(10):
-    scores = one_plus_one_ga(100, 1500)
-'''
-plt.plot([x for x in range(1,1500)], scores)
-plt.title("Fitness scores for elapsed iterations")
-plt.xlabel("Iteration x")
-plt.ylabel("Fitness score")
-plt.show()
-'''
+    plot(100, 1500)
