@@ -1,0 +1,1 @@
+Succeeded in 811 iterationsSucceeded in 1060 iterationsSucceeded in 1054 iterationsSucceeded in 1078 iterationsSucceeded in 832 iterationsSucceeded in 1202 iterationsSucceeded in 925 iterationsSucceeded in 1070 iterationsSucceeded in 1333 iterationsNot succeeded in 1500 iterations
