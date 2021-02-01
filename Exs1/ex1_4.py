@@ -19,7 +19,6 @@ def one_plus_one_ga(l, iter, mode):
     goal.setall(True)
 
     fitness_scores = []
-    success = 0
     converged = False
 
     for i in range(1, iter):
