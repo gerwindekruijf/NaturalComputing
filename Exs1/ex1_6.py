@@ -46,12 +46,25 @@ def crossover(p1, p2, N):
 
     return o1, o2
 
-
 def mutation(order, N):
     r.seed()
     [l1, l2] = r.sample(list(range(N)), k=2)
     order[l1], order[l2] = order[l2], order[l1]
     return order
+
+def local_search(child, locations):    
+    while True:
+        neigh = []
+        co = child.copy()
+        for j in range(len(child) - 1):
+            for i in range(j,len(child)):
+                x = child.copy()
+                x[i], x[j] = x[j], x[i]
+                neigh.append(x)
+        child = best_child(neigh, locations)
+        if fitness(locations, co) >= fitness(locations, child):
+            break
+    return child 
 
 
 def best_child(children, locations):
@@ -59,17 +72,50 @@ def best_child(children, locations):
     return s[0]
 
 
-def simple_EA(iterations, parents_size = 26):
-    locations = []
-    with open("file-tsp.txt", 'r') as f:
-        locations = [[float(token) for token in line.split()] for line in f.readlines()]
+locations = []
+with open("file-tsp.txt", 'r') as f:
+    locations = [[float(token) for token in line.split()] for line in f.readlines()]
 
-    N = len(locations)
-    chance = 1/parents_size
-    initial_order = list(range(N))
+parents_size = 26
+N = len(locations)
+chance = 1/parents_size
+initial_order = list(range(N))
+parents = [r.sample(initial_order, len(initial_order)) for i in range(parents_size)]
 
-    # initial population
-    parents = [r.sample(initial_order, len(initial_order)) for i in range(parents_size)]
+def simple_EA(iterations, locations, parents):
+
+    result = []
+
+    for i in range(iterations):
+        children = []
+        for j in range(int(len(parents) / 2)):
+            # selection
+            [pp1, pp2, pp3, pp4] = r.sample(list(range(parents_size)), k=4)
+
+            p1 = parents[pp1] if fitness(locations, parents[pp1]) < fitness(locations, parents[pp2]) else parents[pp2]
+            p2 = parents[pp3] if fitness(locations, parents[pp3]) < fitness(locations, parents[pp4]) else parents[pp4]
+
+            # crossover
+            o1, o2 = crossover(p1, p2, N)
+            children.append(o1)
+            children.append(o2)
+
+        # mutation
+        r.seed()
+        children = [mutation(c, N) if r.random() < chance else c for c in children]      
+
+        # store best child
+        result.append(best_child(children, locations))
+
+        parents = children
+
+    return [fitness(locations, r) for r in result]
+
+def memetic_al(iterations, locations, parents):
+
+    # initial LOCAL SEARCH
+    for i in range(len(parents)):
+        parents[i] = local_search(parents[i], locations) 
 
     result = []
 
@@ -91,6 +137,10 @@ def simple_EA(iterations, parents_size = 26):
         r.seed()
         children = [mutation(c, N) if r.random() < chance else c for c in children]
 
+        # LOCAL SEARCH for each individual
+        for i in range(len(children)):
+            children[i] = local_search(children[i], locations)        
+
         # store best child
         result.append(best_child(children, locations))
 
@@ -99,10 +149,13 @@ def simple_EA(iterations, parents_size = 26):
     return [fitness(locations, r) for r in result]
 
 
-scores = simple_EA(10000)
+scores_simple = simple_EA(40, locations, parents)
+scores_meme = memetic_al(40, locations, parents)
 
-plt.plot([x for x in range(1, len(scores) + 1)], scores)
+plt.plot([x for x in range(1, len(scores_simple) + 1)], scores_simple, color = "green", label = "simple")
+plt.plot([x for x in range(1, len(scores_meme) + 1)], scores_meme, color = "blue", label = "memetic")
 plt.title("Fitness scores for elapsed iterations")
+plt.legend()
 plt.xlabel("Iteration x")
 plt.ylabel("Fitness score")
 plt.show()
