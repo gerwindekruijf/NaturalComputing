@@ -72,8 +72,12 @@ def best_child(children, locations):
     return s[0]
 
 
+# locations = []
+# with open("file-tsp.txt", 'r') as f:
+#     locations = [[float(token) for token in line.split()] for line in f.readlines()]
+
 locations = []
-with open("file-tsp.txt", 'r') as f:
+with open("48cap.txt", 'r') as f:
     locations = [[float(token) for token in line.split()] for line in f.readlines()]
 
 parents_size = 26
@@ -149,8 +153,8 @@ def memetic_al(iterations, locations, parents):
     return [fitness(locations, r) for r in result]
 
 
-scores_simple = simple_EA(40, locations, parents)
-scores_meme = memetic_al(40, locations, parents)
+scores_simple = simple_EA(80, locations, parents)
+scores_meme = memetic_al(80, locations, parents)
 
 plt.plot([x for x in range(1, len(scores_simple) + 1)], scores_simple, color = "green", label = "simple")
 plt.plot([x for x in range(1, len(scores_meme) + 1)], scores_meme, color = "blue", label = "memetic")
