@@ -50,18 +50,18 @@ class Tree:
     def generate(self, depth):
         r.seed()
         [n] = r.sample(OPERATORS, k=1)
-        if n == 'x' or depth == 1:
+        if n == 'x' or depth == 1: # Final depth node or x
             self.name = 'x'
             return self
 
-        elif n in OPERATORS[1:5]:
+        elif n in OPERATORS[1:5]: # log, exp, sin, cos
             self.name = n
             child = Tree()
             self.children.append(child.generate(depth - 1))
             return self
 
         elif n in OPERATORS[5:]:
-            [c] = r.sample(list(range(2,5)), k=1) # Number of items in summation, Max = 5
+            [c] = r.sample(list(range(2,5)), k=1) # Number of items in summation(+, div, *, -), Max = 5
             self.name = n
             for i in range(c):
                 child = Tree()
@@ -128,6 +128,7 @@ class Tree:
         return result
 
     def depth(self):
+        # Return the maximum depth of the tree
         if len(self.children) == 0:
             return 1
 
@@ -139,6 +140,7 @@ def fitness(tree):
 
 
 def crossover(tree1, tree2):
+    # Select Subtree from parents
     sub_tree = None
     while sub_tree is None:
         sub_tree = tree1.choose(SELECT_TREE)
@@ -151,10 +153,11 @@ def crossover(tree1, tree2):
     
     c2 = sub_tree.deepcopy()
 
-    r1 = tree1.replace(c1, c2) if tree1 != c1 else c1
-    r2 = tree2.replace(c2, c1) if tree2 != c2 else c2
+    # Replace one subtree if the tree, except when the entire tree is selected (then change the entire tree)
+    r1 = tree1.replace(c1, c2) if tree1 != c1 else 1
+    r2 = tree2.replace(c2, c1) if tree2 != c2 else 1
 
-    # TODO test of dit werkt en niet fout gaat bij de tweede keer overschrijven, we werken met references immer
+    # Check if both trees had alterations
     if not (r1 and r2):
         raise Exception("Couldn't replace the tree nodes. Your code is not working")
     
@@ -162,12 +165,14 @@ def crossover(tree1, tree2):
 
 
 def mutation(tree):
+    # Select subtree
     sub_tree = None
     while sub_tree is None:
         sub_tree = tree1.choose(SELECT_TREE)
     
     c1 = sub_tree.deepcopy()
 
+    # Mutate subtree with newly generated tree
     c2 = tree.generate(c1.depth())
     
     return tree.replace(c1, c2)
@@ -188,10 +193,10 @@ def gp():
         while len(children) < POP_SIZE:
             r.seed()
             if r.random() < MUTATION:
+                # Mutation
                 [p1] = r.sample(list(range(len(parents))), k=1)
                 children.append( mutation(p1) )
 
-                
             elif r.random() < CROSSOVER:
                 # Selection (Tournament)
                 [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
