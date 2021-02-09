@@ -11,6 +11,7 @@ CROSSOVER = 0.7
 MUTATION = 0
 SELECT_TREE = 0.1
 MAX_INITIAL_DEPTH = 3
+MAX_DEPTH = 20
 OPERATORS = ['x', 'log', 'exp', 'sin', 'cos', '+', '-', '*', '/']
 
 
@@ -195,7 +196,9 @@ def gp():
             if r.random() < MUTATION:
                 # Mutation
                 [p1] = r.sample(list(range(len(parents))), k=1)
-                children.append( mutation(p1) )
+                c1 = mutation(p1)
+                if c1.depth() < MAX_DEPTH:
+                    children.append(c1)
 
             elif r.random() < CROSSOVER:
                 # Selection (Tournament)
@@ -205,8 +208,12 @@ def gp():
                 p2 = parents[pp3] if fitness(parents[pp3]) < fitness(parents[pp4]) else parents[pp4]
 
                 # Crossover
-                c1, c2 = crossover(p1.deepcopy(), p2.deepcopy())  
-                children.extend([c1, c2])
+                c1, c2 = crossover(p1.deepcopy(), p2.deepcopy())
+                if c1.depth() < MAX_DEPTH:
+                    children.append(c1)
+                if c2.depth() < MAX_DEPTH:
+                    children.append(c2)
+                # children.extend([c1, c2])
         
         print("Storing child")
         
