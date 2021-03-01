@@ -1,7 +1,9 @@
 # Olivier Brahma, Gerwin de Kruijf, Dirren van Vlijmen
 
 # starting path = user
-path = "Documents/GitHub/NaturalComputing/Exs3/"
+
+
+path = "D:/Documents/GitHub/NaturalComputing/Exs3/"
 path_cert = paste0(path, "syscalls/snd-cert/")
 path_unm = paste0(path, "syscalls/snd-unm/")
 
@@ -39,21 +41,23 @@ split_train_set <- function(n, dataset, name){
 
 # Test sets
 split_test_set <- function(n, testset, labels_, name){
-  result = data.frame(A=character(), B=numeric(), C=numeric())
-  testset$labels = labels_
+  result = data.frame(Chunk=character(), String_Number=numeric(), Label=numeric())
+  testset$labels <- labels_$V1
   
-  for(s in testset){
-    splitted = strsplit(s[0],"(?<=.{100})", perl = TRUE)[[1]]
+  for(s in 1:nrow(testset)){
+    print(testset[s,"labels"])
+    splitted = strsplit(testset[s,"V1"],"(?<=.{100})", perl = TRUE)[[1]]
     for(t in splitted){
-      result = append(result, c(t, s[1], ""))
+      result[nrow(result) + 1,] = list(t, s, testset[s, "labels"])
     }
   }
-  print(result)
-  # write.table(result, paste0(path, "/", name))
+  return(result)
 }
 
-x <- split_test_set(100, cert_1, cert_1_l, "syscalls/snd-cert/cert_1_split")
 
+
+x <- split_test_set(100, cert_1, cert_1_l, "syscalls/snd-cert/cert_1_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-cert/cert_1_split"), row.names = FALSE, col.names = FALSE, quote = FALSE)
 # run_commands <- function()
 
 
