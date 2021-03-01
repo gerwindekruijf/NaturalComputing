@@ -3,7 +3,7 @@
 # starting path = user
 
 
-path = "D:/Documents/GitHub/NaturalComputing/Exs3/"
+path = "Documents/GitHub/NaturalComputing/Exs3/"
 path_cert = paste0(path, "syscalls/snd-cert/")
 path_unm = paste0(path, "syscalls/snd-unm/")
 
@@ -45,7 +45,7 @@ split_test_set <- function(n, testset, labels_, name){
   testset$labels <- labels_$V1
   
   for(s in 1:nrow(testset)){
-    print(testset[s,"labels"])
+    # print(testset[s,"labels"])
     splitted = strsplit(testset[s,"V1"],"(?<=.{100})", perl = TRUE)[[1]]
     for(t in splitted){
       result[nrow(result) + 1,] = list(t, s, testset[s, "labels"])
@@ -54,11 +54,43 @@ split_test_set <- function(n, testset, labels_, name){
   return(result)
 }
 
-
-
+# CERT
 x <- split_test_set(100, cert_1, cert_1_l, "syscalls/snd-cert/cert_1_split")
-write.table(x$Chunk, paste0(path, "/syscalls/snd-cert/cert_1_split"), row.names = FALSE, col.names = FALSE, quote = FALSE)
-# run_commands <- function()
+write.table(x$Chunk, paste0(path, "/syscalls/snd-cert/cert_1_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+x <- split_test_set(100, cert_2, cert_2_l, "syscalls/snd-cert/cert_2_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-cert/cert_2_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+x <- split_test_set(100, cert_3, cert_3_l, "syscalls/snd-cert/cert_3_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-cert/cert_3_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+# UNM
+unm_1 = read.delim(paste0(path_unm, "snd-unm.1.test"), header = FALSE)
+unm_1_l = read.delim(paste0(path_unm, "snd-unm.1.labels"), header = FALSE)
+
+unm_2 = read.delim(paste0(path_unm, "snd-unm.2.test"), header = FALSE)
+unm_2_l = read.delim(paste0(path_unm, "snd-unm.2.labels"), header = FALSE)
+
+unm_3 = read.delim(paste0(path_unm, "snd-unm.3.test"), header = FALSE)
+unm_3_l = read.delim(paste0(path_unm, "snd-unm.3.labels"), header = FALSE)
+
+x <- split_test_set(100, unm_1, unm_1_l, "syscalls/snd-unm/unm_1_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-unm/unm_1_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+x <- split_test_set(100, unm_2, unm_2_l, "syscalls/snd-unm/unm_2_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-unm/unm_2_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+x <- split_test_set(100, unm_3, unm_3_l, "syscalls/snd-unm/unm_3_split")
+write.table(x$Chunk, paste0(path, "/syscalls/snd-unm/unm_3_split"), row.names = FALSE, 
+            col.names = FALSE, quote = FALSE)
+
+
+# paste0(path, "syscalls/snd-unm/")
 
 
 
