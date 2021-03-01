@@ -1,0 +1,63 @@
+# Olivier Brahma, Gerwin de Kruijf, Dirren van Vlijmen
+
+# starting path = user
+path = "Documents/GitHub/NaturalComputing/Exs3/"
+path_cert = paste0(path, "syscalls/snd-cert/")
+path_unm = paste0(path, "syscalls/snd-unm/")
+
+args_ = paste0("-jar ", path, "negsel2.jar -self ", path, "english.train", 
+                 " -n 10 -r 4 -c -l < ", path, "english.test")
+
+# system2("java", args_)
+cert_1 = read.delim(paste0(path_cert, "snd-cert.1.test"), header = FALSE)
+cert_1_l = read.delim(paste0(path_cert, "snd-cert.1.labels"), header = FALSE)
+
+cert_2 = read.delim(paste0(path_cert, "snd-cert.2.test"), header = FALSE)
+cert_2_l = read.delim(paste0(path_cert, "snd-cert.2.labels"), header = FALSE)
+
+cert_3 = read.delim(paste0(path_cert, "snd-cert.3.test"), header = FALSE)
+cert_3_l = read.delim(paste0(path_cert, "snd-cert.3.labels"), header = FALSE)
+
+cert_alpha = read.delim(paste0(path_cert, "snd-cert.alpha"), header = FALSE)
+cert_train = read.delim(paste0(path_cert, "snd-cert.train"), header = FALSE)
+
+split_train_set <- function(n, dataset, name){
+  result = c()
+  
+  for(s in dataset$V1){
+    splitted = strsplit(s,"(?<=.{100})", perl = TRUE)[[1]]
+    for(t in splitted){
+      result = append(result, t)
+    }
+  }
+  print(result)
+  write.table(result, paste0(path, "/", name))
+}
+
+# split_train_set(100, cert_train, "syscalls/snd-cert/cert_train_split")
+
+
+# Test sets
+split_test_set <- function(n, testset, labels_, name){
+  result = data.frame(A=character(), B=numeric(), C=numeric())
+  testset$labels = labels_
+  
+  for(s in testset){
+    splitted = strsplit(s[0],"(?<=.{100})", perl = TRUE)[[1]]
+    for(t in splitted){
+      result = append(result, c(t, s[1], ""))
+    }
+  }
+  print(result)
+  # write.table(result, paste0(path, "/", name))
+}
+
+x <- split_test_set(100, cert_1, cert_1_l, "syscalls/snd-cert/cert_1_split")
+
+# run_commands <- function()
+
+
+
+
+
+
