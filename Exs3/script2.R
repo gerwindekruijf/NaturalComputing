@@ -3,9 +3,9 @@
 # starting path = user
 
 #path for Olivier
-#path = 
+path = "Documents/GitHub/NaturalComputing/Exs3/"
 #Path for Dirren
-path = "D:/Documents/GitHub/NaturalComputing/Exs3/"
+#path = "D:/Documents/GitHub/NaturalComputing/Exs3/"
 #Path for Gerwin
 #path = "Documents/GitHub/NaturalComputing/Exs3/"
 
@@ -15,10 +15,10 @@ path_unm = paste0(path, "syscalls/snd-unm/")
 
 run_of_program <- function(path_, alpha,  train_file, n, r, test_file, out_file){
   args_ = paste0("-jar ",path, "negsel2.jar -alphabet ", path_,alpha, " -self ", path_, train_file, 
-                 " -n ", n, " -r ", r, " -c -l < ", path_, test_file, " >> ", path_, out_file)
+                 " -n ", n, " -r ", r, " -c -l < ", path_, test_file)#, " >> ", path_, out_file)
   print(args_)
   
-  system2("java", args_)
+  system2("java", args_, stdout=pasre0(path_,out_file))
 }
 
 cert_1 = read.delim(paste0(path_cert, "snd-cert.1.test"), header = FALSE)
