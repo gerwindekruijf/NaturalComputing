@@ -1,7 +1,8 @@
 
 # Task 2
-Depending on which file i, number of characters n and r
-default n = 6, r = 3
+Depending on which file _i_, number of characters _n_ and _r_
+
+Default n = 6, r = 3
 
 syscall = {unm, cert}
 
