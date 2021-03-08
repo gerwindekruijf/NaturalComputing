@@ -5,12 +5,16 @@ def main(args):
     res = list()
     K = int(args.n)
     with open(args.file, 'r') as f:
+        word = 0
         for line in tqdm(f.readlines()):
             line = line.rstrip('\n')
-            res.extend([line[i: j] for i in range(len(line)) for j in range(i + 1, len(line) + 1) if len(line[i:j]) == K])
+            res.extend([(line[i: j], word) for i in range(len(line)) for j in range(i + 1, len(line) + 1) if len(line[i:j]) == K])
+            word += 1
 
     with open(args.file+"_split", 'w') as f:
-        f.writelines([r + '\n' for r in res])
+        f.writelines([f'{r[0]} \n' for r in res])
+    with open(args.file+"_ref", 'w') as f:
+        f.writelines([f'{r[1]} \n' for r in res])
 
 
 if __name__ == '__main__':
@@ -20,5 +24,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(args)
-
-# python3 split.py "syscalls/snd-cert/snd-cert.3.test" 6
