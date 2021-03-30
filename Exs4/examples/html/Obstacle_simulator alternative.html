@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Obstacle Simulator</title>
+<style type="text/css">
+body{
+		font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue",
+		 Helvetica, Arial, "Lucida Grande", sans-serif;
+	 padding : 15px;
+}
+td {
+	 padding: 10px;
+	 vertical-align: top;
+}
+</style>
+
+
+<script src="./artistoo.js"></script>
+<script src="./fpsmeter.min.js"></script>
+<script>
+"use strict"
+
+
+/*	----------------------------------
+	CONFIGURATION SETTINGS
+	----------------------------------
+*/
+let config = {
+
+	// Grid settings
+	ndim : 2,
+	field_size : [200,200],
+	
+	// CPM parameters and configuration
+	conf : {
+		// Basic CPM parameters
+		torus : [true,true],						// Should the grid have linked borders?
+		seed : 2,							// Seed for random number generation.
+		T : 20,								// CPM temperature
+
+		// Constraint parameters. 
+		// Mostly these have the format of an array in which each element specifies the
+		// parameter value for one of the cellkinds on the grid.
+		// First value is always cellkind 0 (the background) and is often not used.
+		
+		// Adhesion parameters: 0: Background; 1 : real cell; 2: obstacle
+		J : [ [0, 10,0, 20], [10, 0, 1000, 40], [0, 1000, 0, 1000], [20, 0, 1000, 0] ],
+		
+		// VolumeConstraint parameters
+		// VolumeConstraint importance per cellkind
+		// Target volume of each cellkind
+		LAMBDA_V : [0,50,3,3],
+		V : [0,150,100,250],
+        
+        //PerimeterConstraint parameters
+        //PerimeterConstraint importance per cellkind
+        //Targer Perimeter
+        LAMBDA_P  : [0,1,3,2],
+        P : [0,130,35,200],
+
+        		// ActivityConstraint parameters
+		LAMBDA_ACT : [0,200,0,200],				// ActivityConstraint importance per cellkind
+		MAX_ACT : [0,100,0,80],					// Activity memory duration per cellkind
+		ACT_MEAN : "geometric"				// Is neighborhood activity computed as a
+											// "geometric" or "arithmetic" mean?
+
+
+		
+	},
+	
+	// Simulation setup and configuration
+	simsettings : {
+	
+		// Cells on the grid
+		NRCELLS : [2,1,2],					// Number of cells to seed for all
+		// non-background cellkinds.
+	
+		// Runtime etc
+		BURNIN : 500,
+		RUNTIME : 1000,
+		RUNTIME_BROWSER : 20000,
+		
+		// Visualization    
+		CANVASCOLOR : "eaecef",
+		CELLCOLOR : ["00FF00","000000", "0000FF"],
+		ACTCOLOR : [false,false, false],			// Should pixel activity values be displayed?
+		SHOWBORDERS : [true,true, true],				// Should cellborders be displayed?
+		zoom : 2,							// zoom in on canvas with this factor.
+		
+		// Output images
+		SAVEIMG : true,					// Should a png image of the grid be saved
+		// during the simulation?
+		IMGFRAMERATE : 1,					// If so, do this every <IMGFRAMERATE> MCS.
+		SAVEPATH : "output/img/obstacle_sim",				// ... And save the image in this folder.
+		EXPNAME : "Obstacle_sim",					// Used for the filename of output images.
+		
+		// Output stats etc
+		STATSOUT : { browser: false, node: true }, // Should stats be computed?
+		LOGRATE : 10							// Output stats every <LOGRATE> MCS.
+
+	}
+}
+/*	---------------------------------- */
+let sim, meter
+
+
+function initialize(){
+	 /* 	The following functions are defined below and will be added to
+	 	the simulation object.*/
+	 let custommethods = {
+	 	initializeGrid : initializeGrid
+	 }
+	sim = new CPM.Simulation( config, custommethods )
+
+
+	meter = new FPSMeter({left:"auto", right:"5px"})
+	step()
+}
+
+
+function step(){
+	sim.step()
+	meter.tick()
+	if( sim.conf["RUNTIME_BROWSER"] == "Inf" | sim.time+1 < sim.conf["RUNTIME_BROWSER"] ){
+		requestAnimationFrame( step )
+	}
+}
+
+
+
+/* The following custom methods will be added to the simulation object
+below. */
+function initializeGrid(){
+	
+	// add the GridManipulator if not already there and if you need it
+	if( !this.helpClasses["gm"] ){ this.addGridManipulator() }
+
+    let num_cells = 100
+    var k = 0
+	for(k = 0; k < num_cells; k++){this.gm.seedCell(1)}
+
+	for(k = 0; k < 50; k++){this.gm.seedCell(3)}
+
+
+    let i_spac = 70
+    let j_spac = 70
+    var i = 0
+    var j = 0
+    for(i = 35; i < 200; i = i + i_spac){
+        for(j = 35; j< 200; j = j + j_spac){
+            let circ = this.gm.makeCircle( [i,j], 6 )
+            this.gm.assignCellPixels( circ, 2 )
+        }
+    }
+
+
+
+    // // Seed hier op een vaste locatie (in een grid) cellen van type 2
+
+    // Densely packed cellen generen 
+}
+
+</script>
+</head>
+<body onload="initialize()">
+<h1>Obstacle Simulation</h1>
+<p>
+ Densely packed cell with obstacles in between.
+</p>
+</body>
+</html>
