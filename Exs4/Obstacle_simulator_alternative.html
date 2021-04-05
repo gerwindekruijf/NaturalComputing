@@ -42,8 +42,8 @@ let config = {
 		// parameter value for one of the cellkinds on the grid.
 		// First value is always cellkind 0 (the background) and is often not used.
 		
-		// Adhesion parameters: 0: Background; 1 : real cell; 2: obstacle
-		J : [ [0, 10,0, 20], [10, 0, 1000, 40], [0, 1000, 0, 1000], [20, 0, 1000, 0] ],
+		// Adhesion parameters: 0: Background; 1 : real cell (green, smaller); 2: obstacle; 3: real cell (blue, larger)
+		J : [ [0, 10,0, 20], [10, 0, 1000, 40], [0, 1000, 0, 1000], [20, 40, 1000, 0] ],
 		
 		// VolumeConstraint parameters
 		// VolumeConstraint importance per cellkind
