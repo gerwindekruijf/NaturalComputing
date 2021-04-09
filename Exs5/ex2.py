@@ -6,7 +6,6 @@ import numpy as np
 # Python version >= 3.8
 def calc_cumbinprob(n, p):
     result = 0
-
     x = m.floor(n / 2) + 1
 
     for k in range(x, n):
