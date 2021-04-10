@@ -40,11 +40,11 @@ def classifiy():
     X_train, X_test, y_train, y_test = load_data()
 
     # Create DecisionTreeClassifier object
-    rclf = RandomForestClassifier(n_estimators=1000, random_state=1)
+    rclf = RandomForestClassifier(n_estimators=100, random_state=1)
 
     # Create AdaBoostClassifier object
-    abc = AdaBoostClassifier(base_estimator=rclf, 
-                             n_estimators=rclf.n_estimators)
+    abc = AdaBoostClassifier(base_estimator = rclf, 
+                             n_estimators = rclf.n_estimators)
 
     # Train Adaboost Classifer
     aclf = abc.fit(X_train, y_train)
