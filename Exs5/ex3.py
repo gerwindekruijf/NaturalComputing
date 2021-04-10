@@ -4,14 +4,27 @@ import numpy as np
 
 
 # Python version >= 3.8
-def calc_cumbinprob(n=11, weak_p=0.6, w=1, strong_p=0.75):
+def calc_cumbinprob(n=11, weak_p=0.6, strong_p=0.75, w=1):
+    '''
+    Calculate the cumulative binomial probability of a strong 
+    classifier and n-1 weak classifiers.
+
+        Parameters:
+            n (int): N classifiers including strong one
+            weak_p (float): Probability of correct decision
+            strong_p (float): Probability of correct decision
+            w (float): Weight of strong classifier
+
+        Returns:
+            result (float): Cumalative binomial probability
+    '''
     result = 0
     x = m.floor(n / 2) + 1
-
+    
     for k in range(x, n):
-        yes = m.comb(n, k) * weak_p**(k-1) * w * strong_p * (1-weak_p)**(n-k)
-        no = m.comb(n, k) * weak_p**k * w * (1-strong_p) * (1-weak_p)**(n-k-1) if n - k - 1 >= 0 else 0
-        result += (yes + no)/2
+        strong_vote = m.comb(n, k) * weak_p**(k-1) * w * strong_p * (1-weak_p)**(n-k)
+        weak_vote = m.comb(n, k) * weak_p**k * w * (1-strong_p) * (1-weak_p)**(n-k-1)
+        result += (strong_vote + weak_vote)/2 if n - k - 1 >= 0 else strong_vote
 
     return result
 
