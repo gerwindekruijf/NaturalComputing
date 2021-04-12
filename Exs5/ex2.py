@@ -15,14 +15,15 @@ def calc_cumbinprob(n, p):
 
 
 def plot():
-    competence_levels = np.linspace(0.1,0.9,20)
+    competence_levels = np.linspace(0.1,0.9,17)
     jury = [x for x in range(3,103)]
     results = []
     for p in competence_levels:
         for i in jury:
             results.append(calc_cumbinprob(i,p))
-        plt.plot(jury, results)
+        plt.plot(jury, results, label = str(round(p,2)))
         results = []    
+    plt.legend()
 
     plt.title("Probability of a correct decision")
     plt.xlabel("Jury size")
