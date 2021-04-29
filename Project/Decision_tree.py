@@ -123,15 +123,15 @@ class Tree:
         return result
 
     def choose(self, index):
+        # Return a Tree given the index
         elif index == 0:
             return (self, -1)
     
-        res, index = children[0].choose(index)
+        res, index = children[0].choose(index-1)
         if index == -1:
             return (res, index)
 
         return children[1].choose(index)
-        
 
     def depth(self):
         # Return the maximum depth of the tree
@@ -140,6 +140,7 @@ class Tree:
     def complexity(self):
         # Return the number of nodes of the tree
         return np.sum([c.complexity() for c in self.children], initial=1) 
+
 
 def generate_trees(data, number, max_initial_depth):
     # generate a number of trees, with an initial maximum depth
@@ -152,7 +153,8 @@ def fitness(tree, data, labels):
     return (labels == gen_labels).sum()
 
 
-# def crossover(tree1, tree2):
+def crossover(tree1, tree2, max_depth=None):
+# SELECT_TREE = 0.1
 #     # Select Subtree from parents
 #     sub_tree = None
 #     while sub_tree is None:
@@ -175,6 +177,29 @@ def fitness(tree, data, labels):
 #         raise Exception("Couldn't replace the tree nodes. Your code is not working")
     
 #     return tree1, tree2
+    # Select Trees
+    nodes1 = tree1.complexity()
+    n1 = r.randrange(nodes1)
+    c_tree1, i_tree1 = tree1.choose(n1)
+    while max_depth is not None and c_tree1.depth() <= max_depth:
+        c_tree1, i_tree1 = tree1.choose(n1)
+
+    nodes2 = tree2.complexity()
+    n2 = r.randrange(nodes2)
+    c_tree2, i_tree2 = tree2.choose(n1)
+    while max_depth is not None and c_tree2.depth() <= max_depth:
+        c_tree2, i_tree2 = tree2.choose(n1)
+
+    # Switch trees
+    temp_parent = c_tree1.parent
+
+    c_tree1.parent = c_tree2.parent
+    c_tree1.parent.children[i_tree1] = c_tree2
+
+    c_tree2.parent = temp_parent
+    c_tree2.parent.children[i_tree2] = c_tree1
+
+    return tree1, tree2 # TODO: validate that this works
 
 
 def mutation(data, tree):
@@ -197,20 +222,10 @@ def mutation(data, tree):
     
     c_tree.generate(data, c_tree.depth(), c_tree.parent)
 
-    return tree # TODO: validate that this is done using references or copies.
+    return tree # TODO: validate that this is done using references or copies. If not refeerences, than change code on other areas too
 
 
-
-DATA = []
-
-CROSSOVER = 0.7
-SELECT_TREE = 0.1
-
-MAX_DEPTH = 20
-with open("8data.txt", 'r') as f:
-    DATA = [[(float(token) if '−' not in token else -float(token[1:])) for token in line.split()] for line in f.readlines()]
-
-def gp(data, generations, mutation=0):
+def gp(data, labels, generations, mutation=0, crossover=0.7, max_depth=None):
     r.seed()
     result = []
     pop_size = 1000
@@ -221,7 +236,7 @@ def gp(data, generations, mutation=0):
 
     for i in tqdm(range(generations)):
         children = []
-        print("Filling children")
+        print("Filling children") #TODO selection
     #     while len(children) < pop_size:
     #         if r.random() < MUTATION:
     #             # Mutation
@@ -230,7 +245,7 @@ def gp(data, generations, mutation=0):
     #             if c1.depth() < MAX_DEPTH:
     #                 children.append(c1)
 
-    #         elif r.random() < CROSSOVER:
+    #         elif r.random() < crossover:
     #             # Selection (Tournament)
     #             [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
 
@@ -245,29 +260,14 @@ def gp(data, generations, mutation=0):
     #                 children.append(c2)
     #             # children.extend([c1, c2])
         
-    #     print("Storing child")
+        print("Storing child")
         
-    #     # store best child
-    #     s = [child for child in (sorted(children, key=lambda c: fitness(c))) if not np.isnan(fitness(child)) ]
-    #     print(fitness(s[0]))
-    #     print(s[0])
-    #     result.append([s[0], s[0].depth()])
+        # Store best child
+        s = [child for child in (sorted(children, key=lambda c: fitness(c))) if not np.isnan(fitness(child)) ]
+        print(fitness(s[0]))
+        print(s[0])
+        result.append([s[0], s[0].depth()])
 
-    #     parents = children
+        parents = children # Next generation
     
-    # return result
-
-
-# trees = gp()
-# scores_trees = [fitness(tree[0]) for tree in trees]
-# depths_trees = [tree[1] for tree in trees]
-
-# print(trees[-1])
-
-# plt.plot([x for x in range(1, len(trees) + 1)], scores_trees, color="green", label="tree score")
-# plt.plot([x for x in range(1, len(trees) + 1)], depths_trees, color="red", label="tree depth")
-# plt.title("Fitness scores for elapsed iterations")
-# plt.legend()
-# plt.xlabel("Iteration x")
-# plt.ylabel("Fitness score")
-# plt.show()
+    return result
