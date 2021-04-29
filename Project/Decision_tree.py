@@ -11,99 +11,63 @@ class Tree:
     A Tree contains a label, operator and value
     """
     def __init__(self, label=None, children=[], parent=(None,0), operator=None, value=None):
-        self.label = label          # Data label, or classification label
-        self.operator = operator    # Operator
-        self.value = value          # Data comparison value
-        self.parent = parent        # Tuple containing parent and childindex for efficiency (no eq function needed for crossover?)
-        self.children = []          # Subtrees
+        self.label = label       # Data label, or classification label TODO pas aan zodat het duidelijker is wanneer het gaat om column label of om label
+        self.operator = operator # Operator
+        self.value = value       # Data comparison value
+        self.parent = parent     # Tuple containing parent and childindex for efficiency (no eq function needed for crossover?)
+        self.children = []       # Subtrees TODO: maak tuple, zodat je niet meer kinderen kan
         if children is not None:
             for child in children:
                 self.children.append(child)
 
-    def generate(self, data, depth, parent):
-        self.parent = parent
-        self.operator = OPERATORS[0] if depth == 0 else r.choice(OPERATORS)
+        def __init__(self, pTree):
+        self.label = pTree.label       # Data label, or classification label TODO pas aan zodat het duidelijker is wanneer het gaat om column label of om label
+        self.operator = pTree.operator # Operator
+        self.value = pTree.value       # Data comparison value
+        self.parent = pTree.parent     # Tuple containing parent and childindex for efficiency (no eq function needed for crossover?)
+        self.children = []             # Subtrees TODO: maak tuple, zodat je niet meer kinderen kan
+        if children is not None:
+            for child in pTree.children:
+                self.children.append(Tree(pTree.child))
 
-        if self.operator == OPERATORS[0]:
-            self.label = r.choice(data.shape[1]) # select random column
+
+    def generate(self, data, cat, labels, depth, parent):
+        self.parent = parent
+
+        if depth == 0:
+            self.operator == OPERATORS[0]:
+            self.label = r.choice(labels) # Select random classification
         else
-            # We could split the data to get more accurate representation, big no from me though
-            self.value = r.choice(data[label])
-            for i in range(2):
-                child = Tree()
-                self.children.append(child.generate(data, depth - 1, (this, i)))
+            self.label = r.choice(data.shape[1]) # Select random column
+            if cat[self.label]:
+                self.operator = OPERATORS[1]
+                self.value = r.choice(data[self.label])
+            else:
+                self.operator = r.choice(OPERATORS[2:4])
+                self.value = r.random()
+                # We could split the data to get more accurate representation, big no from me though
+                # Dit is een GP keuze, geen splitting voor data, maar als het slecht gaat optie om naar te kijken
+                for i in range(2):
+                    child = Tree()
+                    self.children.append(child.generate(data, cat, labels, depth - 1, (self, i)))
 
         return self
 
-    # def __eq__(self, other):
-    #     if isinstance(other, Tree):
-    #         for child in self.children:
-    #             if any([child == oc] for oc in other.children):
-    #                 continue
-    #             return False
-            
-    #         for child in other.children:
-    #             if any([child == oc] for oc in self.children):
-    #                 continue
-    #             return False
-
-    #         return self.name == other.name
-    #     return False
-
-    # def __str__(self):
-    #     return f"({self.name}"+ ','.join([str(c) for c in self.children]) +" )"
-
-    # def deepcopy(self):
-    #     return Tree(self.name, [c.deepcopy() for c in self.children])
-
-    # def choose(self, p):
-    #     r.seed()
-
-    #     # Pick this Tree
-    #     if p >= r.random():
-    #         return self
-        
-    #     # No children
-    #     if len(self.children) == 0:
-    #         return None
-
-    #     c = [child.choose(p) for child in self.children]
-    #     c = [i for i in c if i]
-        
-    #     if len(c) == 0:
-    #         return None
-        
-    #     [pick] = r.sample(c, k=1)
-
-    #     return pick
-
-    # def replace(self, tree_old, tree_new):
-    #     for i in range(len(self.children)):
-    #         # print(f'{tree_old}---{self.children[i]}')
-    #         if self.children[i] == tree_old:
-    #             self.children[i] = tree_new
-    #             return 1
-    #         if self.children[i].replace(tree_old, tree_new):
-    #             return 1
-
-    #     # no child got replaced
-    #     return 0
-
     def classify(self, data):
-        
         # This is a leaf, classify the data
         if self.operator == OPERATORS[0]:
             return [self.label for _ in data]
 
         # Sort data in True or False for this statement
-        s = np.array()
-        for i in data:
-            if self.operator == OPERATORS[1]: # ==
-                s.append(data[self.label] == self.value)
-            if self.operator == OPERATORS[2]: # <
-                s.append(data[self.label] < self.value)
-            if self.operator == OPERATORS[3]: # >
-                s.append(data[self.label] > self.value)
+        s = []
+        if self.operator == OPERATORS[1]: # ==
+            s = (data[self.label] == self.value)
+        elif self.operator == OPERATORS[2]: # <
+            s = (data[self.label] < self.value)
+        elif self.operator == OPERATORS[3]: # >
+            s = (data[self.label] > self.value)
+        
+        s = np.array(s)
 
         # Classify data in subtrees
         d_t = self.children[0].classify(data[s])
@@ -135,139 +99,114 @@ class Tree:
 
     def depth(self):
         # Return the maximum depth of the tree
-        return np.max([c.depth() for c in self.children], initial=1) 
+        return np.max([c.depth() for c in self.children], initial=0) + 1
     
     def complexity(self):
         # Return the number of nodes of the tree
-        return np.sum([c.complexity() for c in self.children], initial=1) 
+        return np.sum([c.complexity() for c in self.children], initial=1)
 
 
-def generate_trees(data, number, max_initial_depth):
+def generate_trees(data, cat, labels, number, max_initial_depth):
     # generate a number of trees, with an initial maximum depth
-    return [Tree().generate(data, max_initial_depth, (None,0)) for _ in range(number)]
+    return [Tree().generate(data, cat, set(labels), max_initial_depth, (None,0)) for _ in range(number)]
     
 
 def fitness(tree, data, labels):
     # Number of equal elements TODO: should this be normalized?
+    # TODO FITNESS SHOULD TAKE DEPTH INTO ACCOUNT
     gen_labels = tree.classify(data)
     return (labels == gen_labels).sum()
 
 
 def crossover(tree1, tree2, max_depth=None):
-# SELECT_TREE = 0.1
-#     # Select Subtree from parents
-#     sub_tree = None
-#     while sub_tree is None:
-#         sub_tree = tree1.choose(SELECT_TREE)
-    
-#     c1 = sub_tree.deepcopy()
-    
-#     sub_tree = None
-#     while sub_tree is None:
-#         sub_tree = tree2.choose(SELECT_TREE)
-    
-#     c2 = sub_tree.deepcopy()
-
-#     # Replace one subtree if the tree, except when the entire tree is selected (then change the entire tree)
-#     r1 = tree1.replace(c1, c2) if tree1 != c1 else 1
-#     r2 = tree2.replace(c2, c1) if tree2 != c2 else 1
-
-#     # Check if both trees had alterations
-#     if not (r1 and r2):
-#         raise Exception("Couldn't replace the tree nodes. Your code is not working")
-    
-#     return tree1, tree2
     # Select Trees
-    nodes1 = tree1.complexity()
-    n1 = r.randrange(nodes1)
-    c_tree1, i_tree1 = tree1.choose(n1)
-    while max_depth is not None and c_tree1.depth() <= max_depth:
-        c_tree1, i_tree1 = tree1.choose(n1)
+    r1, r2 = Tree(tree1), Tree(tree2)
 
-    nodes2 = tree2.complexity()
+    nodes1 = r1.complexity()
+    n1 = r.randrange(nodes1)
+    c_tree1, i_tree1 = r1.choose(n1)
+    while max_depth is not None and c_tree1.depth() <= max_depth:
+        n1 = r.randrange(nodes1)
+        c_tree1, i_tree1 = r1.choose(n1)
+
+    nodes2 = r2.complexity()
     n2 = r.randrange(nodes2)
-    c_tree2, i_tree2 = tree2.choose(n1)
+    c_tree2, i_tree2 = r2.choose(n2)
     while max_depth is not None and c_tree2.depth() <= max_depth:
-        c_tree2, i_tree2 = tree2.choose(n1)
+        n2 = r.randrange(nodes2)
+        c_tree2, i_tree2 = r2.choose(n2)
 
     # Switch trees
     temp_parent = c_tree1.parent
 
     c_tree1.parent = c_tree2.parent
-    c_tree1.parent.children[i_tree1] = c_tree2
-
     c_tree2.parent = temp_parent
+
+    c_tree1.parent.children[i_tree1] = c_tree2
     c_tree2.parent.children[i_tree2] = c_tree1
 
-    return tree1, tree2 # TODO: validate that this works
+    return tree1, tree2 # TODO: validate that this works, check with fitness function
 
 
-def mutation(data, tree):
-    # # Select subtree
-    # sub_tree = None
-    # while sub_tree is None:
-    #     sub_tree = tree1.choose(SELECT_TREE)
-    
-    # c1 = sub_tree.deepcopy()
-
-    # # Mutate subtree with newly generated tree
-    # c2 = tree.generate(c1.depth())
-    
-    # return tree.replace(c1, c2)
-
+def mutation(data, cat, labels, tree):
     # changed mutation to random subtree
-    nodes = tree.complexity()
+    rt = Tree(tree)
+    nodes = rt.complexity()
     n = r.randrange(nodes)
-    c_tree, _ = tree.choose(n)
+    c_tree, _ = rt.choose(n)
     
-    c_tree.generate(data, c_tree.depth(), c_tree.parent)
+    c_tree.generate(data, cat, set(labels), c_tree.depth(), c_tree.parent)
 
-    return tree # TODO: validate that this is done using references or copies. If not refeerences, than change code on other areas too
+    return rt # TODO: validate that this is done using references or copies. If not refeerences, than change code on other areas too
 
 
-def gp(data, labels, generations, mutation=0, crossover=0.7, max_depth=None):
+def gp(data, cat, labels, generations, pop_size=1000, mutation=0, cross_rate=0.7, max_depth=None, cross_max_depth=None):
+    """
+    GP algorithm for decision trees based on dataframe
+
+    data: NORMALIZED dataframe containing the data FOR THIS GP
+    cat: dataframe containing booleans if label is categorical
+    labels: True results for each row in data
+    """
     r.seed()
-    result = []
-    pop_size = 1000
 
     # Initial population
     print("Creating initial population...")
-    parents = generate_trees(data, pop_size, 3)
+    parents = generate_trees(data, cat, labels, pop_size, 3)
 
     for i in tqdm(range(generations)):
-        children = []
-        print("Filling children") #TODO selection
-    #     while len(children) < pop_size:
-    #         if r.random() < MUTATION:
-    #             # Mutation
-    #             [p1] = r.sample(list(range(len(parents))), k=1)
-    #             c1 = mutation(p1)
-    #             if c1.depth() < MAX_DEPTH:
-    #                 children.append(c1)
+        print("Mutating phase...") #TODO selection
+        parents2 = []
+        for parent in parents:
+            if r.random() < mutation:
+                # Mutation#r.sample(list(range(len(parents))), k=1)
+                p1 = mutation(data, cat, labels, parent)
+                parents2.append(p1)
 
-    #         elif r.random() < crossover:
-    #             # Selection (Tournament)
-    #             [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
+        parents.extend(parents2)
 
-    #             p1 = parents[pp1] if fitness(parents[pp1]) < fitness(parents[pp2]) else parents[pp2]
-    #             p2 = parents[pp3] if fitness(parents[pp3]) < fitness(parents[pp4]) else parents[pp4]
+        print("Filling phase...")
+        parents2 = []
+        while len(parents2) < pop_size*cross_rate:
+            # Selection (Tournament)
+            [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
 
-    #             # Crossover
-    #             c1, c2 = crossover(p1.deepcopy(), p2.deepcopy())
-    #             if c1.depth() < MAX_DEPTH:
-    #                 children.append(c1)
-    #             if c2.depth() < MAX_DEPTH:
-    #                 children.append(c2)
-    #             # children.extend([c1, c2])
-        
-        print("Storing child")
-        
-        # Store best child
-        s = [child for child in (sorted(children, key=lambda c: fitness(c))) if not np.isnan(fitness(child)) ]
-        print(fitness(s[0]))
-        print(s[0])
-        result.append([s[0], s[0].depth()])
+            p1 = parents[pp1] if fitness(parents[pp1], data, labels) < fitness(parents[pp2], data, labels) else parents[pp2]
+            p2 = parents[pp3] if fitness(parents[pp3], data, labels) < fitness(parents[pp4], data, labels) else parents[pp4]
 
-        parents = children # Next generation
+            # Crossover
+            c1, c2 = crossover(p1, p2, cross_max_depth)
+            if c1.depth() < max_depth:
+                parents2.append(c1)
+            if c2.depth() < max_depth:
+                parents2.append(c2)
+
+        parents.extend(parents2)
+
+        print("Selecting next generation...")
+        s = [p for p in sorted(parents, key=lambda c: fitness(c, data, labels))]# if not np.isnan(fitness(child, data, labels)) ]
+        print(f"Best fitness {i}: {fitness(s[0], data, labels)}")
+
+        parents = s[:100] # Next generation
     
-    return result
+    return parents[0]
