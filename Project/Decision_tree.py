@@ -20,7 +20,7 @@ class Tree:
             for child in children:
                 self.children.append(child)
 
-        def __init__(self, pTree):
+    def __init__(self, pTree):
         self.label = pTree.label       # Data label, or classification label TODO pas aan zodat het duidelijker is wanneer het gaat om column label of om label
         self.operator = pTree.operator # Operator
         self.value = pTree.value       # Data comparison value
@@ -30,14 +30,13 @@ class Tree:
             for child in pTree.children:
                 self.children.append(Tree(pTree.child))
 
-
     def generate(self, data, cat, labels, depth, parent):
         self.parent = parent
 
         if depth == 0:
-            self.operator == OPERATORS[0]:
+            self.operator == OPERATORS[0]
             self.label = r.choice(labels) # Select random classification
-        else
+        else:
             self.label = r.choice(data.shape[1]) # Select random column
             if cat[self.label]:
                 self.operator = OPERATORS[1]
@@ -80,7 +79,7 @@ class Tree:
             if i:
                 result.append(d_t[t])
                 t += 1
-            else
+            else:
                 result.append(d_f[f])
                 f += 1
 
@@ -88,7 +87,7 @@ class Tree:
 
     def choose(self, index):
         # Return a Tree given the index
-        elif index == 0:
+        if index == 0:
             return (self, -1)
     
         res, index = children[0].choose(index-1)
