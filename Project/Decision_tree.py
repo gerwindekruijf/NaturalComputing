@@ -48,14 +48,11 @@ class Tree:
     
     def generate(self, data, cat, labels, depth, parent):
         self.parent = parent
-        # print(parent[0])
         if self not in self.parent[0].children:
             self.parent[0].children.append(self)
         self.operator = r.choice(OPERATORS[0:4])
 
         if depth == 0 or self.operator == OPERATORS[0]:
-            # if parent[0] is None:
-            #     raise Exception("Tree can't be just a leaf")
             self.operator = OPERATORS[0]
             self.label = r.choice(labels) # Select random classification label
         else:
@@ -145,7 +142,7 @@ def generate_trees(data, cat, labels, number, max_initial_depth):
     
 
 def fitness(tree, data, labels):
-    # Number of equal elements TODO: should this be normalized?
+    # Number of equal elements
     # TODO FITNESS SHOULD TAKE DEPTH INTO ACCOUNT
     gen_labels = tree.classify(data)
     return (labels == gen_labels).sum()
@@ -154,16 +151,12 @@ def fitness(tree, data, labels):
 def crossover(tree1, tree2, max_depth=None):
     # Select Trees
     r1, r2 = Tree(tree=tree1, parent=(Tree(operator=OPERATORS[4]),0)), Tree(tree=tree2, parent=(Tree(operator=OPERATORS[4]),0))
-    # print(tree1.children)
-    # print(r1.children)
-    # print(tree2.children)
-    # print(r2.children)
 
     nodes1 = r1.complexity()
     n1 = r.randrange(nodes1)
     c_tree1, _ = r1.choose(n1)
     # Tree should be within max_depth
-    # SHould have a parent, TODO do without this? introduce Root node?
+    # TODO remove ROOT? Does make crossover easier, but could be removed
     while c_tree1.parent[0] is None or max_depth is not None and c_tree1.depth() <= max_depth:
         n1 = r.randrange(nodes1)
         c_tree1, _ = r1.choose(n1)
@@ -175,10 +168,6 @@ def crossover(tree1, tree2, max_depth=None):
         n2 = r.randrange(nodes2)
         c_tree2, _ = r2.choose(n2)
 
-    # print(c_tree1)
-    # print(c_tree2)
-    # print(c_tree1.parent)
-    # print(c_tree2.parent)
     # Switch trees
     temp_parent1 = c_tree1.parent
     temp_parent2 = c_tree2.parent
@@ -186,28 +175,10 @@ def crossover(tree1, tree2, max_depth=None):
     c_tree1.parent = c_tree2.parent
     c_tree2.parent = temp_parent1
 
-    # print(c_tree1.parent)
-    # print(c_tree2.parent)
-    # print(r1)
-    # print(tree1)
-    # print(c_tree1)
-    # print(r2)
-    # print(tree2)
-    # print(c_tree2)
-
-
     temp_parent1[0].children[temp_parent1[1]] = c_tree2
     temp_parent2[0].children[temp_parent1[1]] = c_tree1
 
-    # if (tree1 is TEMP or tree2 is TEMP):
-    #     print(tree1)
-    #     print(r1)
-    #     print(tree2)
-    #     print(r2)
-
-    #     raise Exception
-
-    return r1, r2 # TODO: validate that this works, check with fitness function
+    return r1, r2
 
 
 def mutation(data, cat, labels, tree):
@@ -219,21 +190,17 @@ def mutation(data, cat, labels, tree):
     
     classifiers = list(set(labels))
     c_tree.generate(data, cat, classifiers, c_tree.depth(), c_tree.parent)
-    # print(tree)
-    # print(c_tree)
-    # print(rt)
-    return rt # TODO: validate that this is done using references or copies. If not refeerences, than change code on other areas too
+    return rt 
 
 
 def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rate=0.7, max_depth=None, cross_max_depth=None):
     """
     GP algorithm for decision trees based on dataframe
 
-    data: NORMALIZED dataframe containing the data FOR THIS GP
+    data: NORMALIZED (because of random) dataframe containing the data FOR THIS GP
     cat: dataframe containing booleans if label is categorical
     labels: True results for each row in data
     """
-    # TEMP = None
     seed = r.randrange(sys.maxsize)
     rng = r.seed(seed)
     print("Seed was:", seed)
@@ -247,7 +214,7 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
         parents2 = []
         for parent in parents:
             if r.random() < mutation_rate:
-                # Mutation#r.sample(list(range(len(parents))), k=1)
+                # Mutation
                 p1 = mutation(data, cat, labels, parent)
                 parents2.append(p1)
 
@@ -262,10 +229,6 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
             p1 = parents[pp1] if fitness(parents[pp1], data, labels) < fitness(parents[pp2], data, labels) else parents[pp2]
             p2 = parents[pp3] if fitness(parents[pp3], data, labels) < fitness(parents[pp4], data, labels) else parents[pp4]
 
-            # if TEMP is not None and (p1 is TEMP or p2 is TEMP):
-            #     print(TEMP)
-            #     print(s.index(TEMP))
-
             # Crossover
             c1, c2 = crossover(p1, p2, cross_max_depth)
             if max_depth is None or c1.depth() < max_depth:
@@ -277,17 +240,13 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
 
 
         print("Selecting next generation...")
-        s = sorted(parents, key=lambda c: fitness(c, data, labels), reverse=True)# if not np.isnan(fitness(child, data, labels)) ]
-        # for p in s:
-        #     if TEMP is not None and p is TEMP:
-                # print(TEMP)
-                # print(s.index(TEMP))
-                # raise Exception
+        s = sorted(parents, key=lambda c: fitness(c, data, labels), reverse=True)
+
         print(f"Best fitness {i}: {fitness(s[0], data, labels)}")
         print(s[0])
-        # TEMP = s[0]
 
         parents = s[:100] # Next generation
     
     return parents[0]
-#TODO: multithreading voor langzame delen
+# TODO: multithreading voor langzame delen
+# TODO: Clean up code
