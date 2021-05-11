@@ -233,8 +233,8 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
     cat: dataframe containing booleans if label is categorical
     labels: True results for each row in data
     """
-    TEMP = None
-    seed = 4197704792788398731#r.randrange(sys.maxsize)
+    # TEMP = None
+    seed = r.randrange(sys.maxsize)
     rng = r.seed(seed)
     print("Seed was:", seed)
 
@@ -262,9 +262,9 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
             p1 = parents[pp1] if fitness(parents[pp1], data, labels) < fitness(parents[pp2], data, labels) else parents[pp2]
             p2 = parents[pp3] if fitness(parents[pp3], data, labels) < fitness(parents[pp4], data, labels) else parents[pp4]
 
-            if TEMP is not None and (p1 is TEMP or p2 is TEMP):
-                print(TEMP)
-                print(s.index(TEMP))
+            # if TEMP is not None and (p1 is TEMP or p2 is TEMP):
+            #     print(TEMP)
+            #     print(s.index(TEMP))
 
             # Crossover
             c1, c2 = crossover(p1, p2, cross_max_depth)
@@ -285,7 +285,7 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
                 # raise Exception
         print(f"Best fitness {i}: {fitness(s[0], data, labels)}")
         print(s[0])
-        TEMP = s[0]
+        # TEMP = s[0]
 
         parents = s[:100] # Next generation
     
