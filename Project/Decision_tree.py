@@ -208,6 +208,7 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
     # Initial population
     print("Creating initial population...")
     parents = generate_trees(data, cat, labels, pop_size, 3)
+    scores = [fitness(p, data, labels) for p in parents]
 
     for i in tqdm(range(generations)):
         print("Mutating phase...")
@@ -219,6 +220,7 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
                 parents2.append(p1)
 
         parents.extend(parents2)
+        scores.extend([fitness(p, data, labels) for p in parents2])
 
         print("Filling phase...")
         parents2 = []
@@ -226,8 +228,8 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
             # Selection (Tournament)
             [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
 
-            p1 = parents[pp1] if fitness(parents[pp1], data, labels) < fitness(parents[pp2], data, labels) else parents[pp2]
-            p2 = parents[pp3] if fitness(parents[pp3], data, labels) < fitness(parents[pp4], data, labels) else parents[pp4]
+            p1 = parents[pp1] if scores[pp1] < scores[pp2] else parents[pp2]
+            p2 = parents[pp3] if scores[pp3] < scores[pp4] else parents[pp4]
 
             # Crossover
             c1, c2 = crossover(p1, p2, cross_max_depth)
@@ -237,15 +239,15 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
                 parents2.append(c2)
 
         parents.extend(parents2)
-
+        scores.extend([fitness(p, data, labels) for p in parents2])
 
         print("Selecting next generation...")
-        s = sorted(parents, key=lambda c: fitness(c, data, labels), reverse=True)
+        s = sorted(list(zip(parents, scores)), key=lambda x: x[1], reverse=True)
 
-        print(f"Best fitness {i}: {fitness(s[0], data, labels)}")
-        print(s[0])
+        print(f"Best fitness {i}: {s[0][1]}")
+        print(s[0][0])
 
-        parents = s[:100] # Next generation
+        parents, scores = map(list,zip(*s[:100])) # Next generation
     
     return parents[0]
 # TODO: multithreading voor langzame delen

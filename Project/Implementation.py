@@ -16,7 +16,7 @@ LABELS = DATA['A15']
 DATA = DATA.drop(columns='A15')
 
 def implement():
-    x=gp(DATA, AUS_cat, LABELS, 5, pop_size=100, mutation_rate=0.3, cross_rate=0.7, max_depth=20, cross_max_depth=None)
+    x=gp(DATA, AUS_cat, LABELS, 8, pop_size=400, mutation_rate=0.3, cross_rate=0.7, max_depth=20, cross_max_depth=None)
     #TODO COLUMNS SHOULD CONTAIN NAMES FOR DF TO WORK
 
 # scores_trees = [fitness(tree[0]) for tree in trees]
