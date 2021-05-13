@@ -193,7 +193,7 @@ def mutation(data, cat, labels, tree):
     return rt 
 
 
-def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rate=0.7, max_depth=None, cross_max_depth=None):
+def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, disp=False):
     """
     GP algorithm for decision trees based on dataframe
 
@@ -203,15 +203,18 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
     """
     seed = r.randrange(sys.maxsize)
     rng = r.seed(seed)
-    print("Seed was:", seed)
+    if disp:
+        print("Seed was:", seed)
 
     # Initial population
-    print("Creating initial population...")
+    if disp:
+        print("Creating initial population...")
     parents = generate_trees(data, cat, labels, pop_size, 3)
     scores = [fitness(p, data, labels) for p in parents]
 
     for i in tqdm(range(generations)):
-        print("Mutating phase...")
+        if disp:
+            print("Mutating phase...")
         parents2 = []
         for parent in parents:
             if r.random() < mutation_rate:
@@ -222,7 +225,8 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
         parents.extend(parents2)
         scores.extend([fitness(p, data, labels) for p in parents2])
 
-        print("Filling phase...")
+        if disp:
+            print("Filling phase...")
         parents2 = []
         while len(parents2) < pop_size*cross_rate:
             # Selection (Tournament)
@@ -241,11 +245,14 @@ def gp(data, cat, labels, generations, pop_size=1000, mutation_rate=0, cross_rat
         parents.extend(parents2)
         scores.extend([fitness(p, data, labels) for p in parents2])
 
-        print("Selecting next generation...")
+        if disp:
+            print("Selecting next generation...")
         s = sorted(list(zip(parents, scores)), key=lambda x: x[1], reverse=True)
 
-        print(f"Best fitness {i}: {s[0][1]}")
-        print(s[0][0])
+        if disp:
+            print(f"Best fitness {i}: {s[0][1]}")
+        if disp:
+            print(s[0][0])
 
         parents, scores = map(list,zip(*s[:100])) # Next generation
     
