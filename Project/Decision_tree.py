@@ -141,11 +141,16 @@ def generate_trees(data, cat, labels, number, max_initial_depth):
         ]
     
 
-def fitness(tree, data, labels):
+def fitness(tree, data, labels, weights = [float(1/2), float(1/2), float(0)]):
     # Number of equal elements
     # TODO FITNESS SHOULD TAKE DEPTH INTO ACCOUNT
     gen_labels = tree.classify(data)
-    return (labels == gen_labels).sum()
+    equal = gen_labels[gen_labels == labels]
+    TPR = len(equal[equal == 1])/len(labels[labels==1])
+    FNR = len(equal[equal == 0])/len(labels[labels==0])
+    depth_penalty = tree.depth()/(len(data.columns) - 1)
+
+    return TPR * weights[0] + FNR * weights[1] - depth_penalty * weights[2]
 
 
 def crossover(tree1, tree2, max_depth=None):
@@ -157,14 +162,14 @@ def crossover(tree1, tree2, max_depth=None):
     c_tree1, _ = r1.choose(n1)
     # Tree should be within max_depth
     # TODO remove ROOT? Does make crossover easier, but could be removed
-    while c_tree1.parent[0] is None or max_depth is not None and c_tree1.depth() <= max_depth:
+    while c_tree1.parent[0] is None or max_depth is not None and c_tree1.depth() > max_depth:
         n1 = r.randrange(nodes1)
         c_tree1, _ = r1.choose(n1)
 
     nodes2 = r2.complexity()
     n2 = r.randrange(nodes2)
     c_tree2, _ = r2.choose(n2)
-    while c_tree2.parent[0] is None or max_depth is not None and c_tree2.depth() <= max_depth:
+    while c_tree2.parent[0] is None or max_depth is not None and c_tree2.depth() > max_depth:
         n2 = r.randrange(nodes2)
         c_tree2, _ = r2.choose(n2)
 
@@ -193,7 +198,7 @@ def mutation(data, cat, labels, tree):
     return rt 
 
 
-def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, disp=False):
+def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, fit_weights = [float(1/2), float(1/2), float(0)], disp=False):
     """
     GP algorithm for decision trees based on dataframe
 
@@ -210,7 +215,7 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
     if disp:
         print("Creating initial population...")
     parents = generate_trees(data, cat, labels, pop_size, 3)
-    scores = [fitness(p, data, labels) for p in parents]
+    scores = [fitness(p, data, labels, fit_weights) for p in parents]
 
     for i in tqdm(range(generations)):
         if disp:
@@ -223,7 +228,7 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
                 parents2.append(p1)
 
         parents.extend(parents2)
-        scores.extend([fitness(p, data, labels) for p in parents2])
+        scores.extend([fitness(p, data, labels, fit_weights) for p in parents2])
 
         if disp:
             print("Filling phase...")
@@ -243,7 +248,7 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
                 parents2.append(c2)
 
         parents.extend(parents2)
-        scores.extend([fitness(p, data, labels) for p in parents2])
+        scores.extend([fitness(p, data, labels, fit_weights) for p in parents2])
 
         if disp:
             print("Selecting next generation...")
@@ -259,3 +264,4 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
     return parents[0]
 # TODO: multithreading voor langzame delen
 # TODO: Clean up code
+
