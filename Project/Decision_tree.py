@@ -272,6 +272,4 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
         parents, scores = map(list,zip(*s[:100])) # Next generation
     
     return parents[0]
-# TODO: multithreading voor langzame delen
 # TODO: Clean up code
-

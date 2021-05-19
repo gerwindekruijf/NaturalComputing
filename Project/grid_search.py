@@ -116,7 +116,7 @@ def gs_rates(multi_proc):
 
 def gs_learners(multi_proc):
     results=[]
-    for learners in range(2, 20, 20):
+    for learners in range(2, 20):
         for pop_size in range(200, 600, 50):
             print(f"Performing GP + ensemble for normal values, learners: {learners} and pop_size: {pop_size}")
             TPR , TNR, _ = perform_gp(learners=learners, pop_size=pop_size, multi_proc=multi_proc)
