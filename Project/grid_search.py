@@ -26,7 +26,7 @@ LABELS = 'A15'
 
 def ensemble_learning(
     sample_size=100, learners=8, generations=8, pop_size=500, mut_rate=0.3, cross_rate=0.6,
-    fit_weights=None, max_depth=20, cross_md=10, multi_proc=False):
+    fit_weights=None, max_depth=16, cross_md=9, multi_proc=False):
     """
     Ensemble learning algorithm
 
@@ -44,9 +44,9 @@ def ensemble_learning(
     :type cross_rate: float, optional
     :param fit_weights: importance for all classifications + depth penalty, defaults to None
     :type fit_weights: list, optional
-    :param max_depth: maximum depth of a tree, defaults to 20
+    :param max_depth: maximum depth of a tree, defaults to 16
     :type max_depth: int, optional
-    :param cross_md: maximum depth of subtree to combine with child, defaults to 10
+    :param cross_md: maximum depth of subtree to combine with child, defaults to 9
     :type cross_md: int, optional
     :param multi_proc: multiprocessing, defaults to False
     :type multi_proc: bool, optional
@@ -196,10 +196,10 @@ def gs_learners(multi_proc):
     """
     results=[]
     for learners in range(5, 11):
-        for pop_size in range(200, 401, 50):
-            print(f"Performing GP + ensemble for normal values, learners: {learners} and pop_size: {pop_size}")
-            t_rates = ensemble_learning(learners=learners, pop_size=pop_size, multi_proc=multi_proc)
+        for sample_size in range(100, 401, 100):
+            print(f"Performing GP + ensemble for normal values, learners: {learners} and sample_size: {sample_size}")
+            t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc)
             h_mean = stats.hmean(t_rates)
-            results.append((t_rates, h_mean, [learners, pop_size]))
+            results.append((t_rates, h_mean, [learners, sample_size]))
 
     return results
