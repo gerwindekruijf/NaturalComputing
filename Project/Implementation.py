@@ -1,11 +1,18 @@
+"""
+main module of the code
+"""
 import argparse
+import sys
+import random as r
 
 import pandas as pd
 import numpy as np
 from sklearn import preprocessing
+from tqdm.contrib.concurrent import process_map
+from tqdm import tqdm
 
-from decision_tree import gp, fitness
-from grid_search import AUS_columns, AUS_cat, LABELS, DATA
+from decision_tree import dt_gp
+from grid_search import AUS_cat, LABELS, DATA
 import grid_search as gs
 
 
@@ -17,53 +24,96 @@ GRID_SEARCH = {
     "learners": gs.gs_learners,
 }
 # TODO: optimalizatie voor: 1. Max_depth samen met cross_depth
-#                           2. Generaties samen met learners en pop 
+#                           2. Generaties samen met learners en pop
 #                               COMMENTAAR: HEB LEARNERS WEGGELATEN, leek overbodig
 #                           3. Cros_rate en mut_rate
-#                           4. Learners (optimale waarde uit 2. iig in gebruiken) en sample_size 
+#                           4. Learners (optimale waarde uit 2. iig in gebruiken) en sample_size
 #                               COMMENTAAR: geen optimale waarde uit 2 :(
 #         (runnen proberen onder het uur te houden, elke run is ongeveer 1 minuut)
 
 
 def norm(data):
-    x = data.values #returns a numpy array
+    """
+    normalize data
+
+    :param data: data
+    :type data: dataframe
+    :return: data
+    :rtype: dataframe
+    """
+    values = data.values #returns a numpy array
     min_max_scaler = preprocessing.MinMaxScaler()
-    x_scaled = min_max_scaler.fit_transform(x)
-    return pd.DataFrame(x_scaled, columns=data.columns)
+    values_scaled = min_max_scaler.fit_transform(values)
+    return pd.DataFrame(values_scaled, columns=data.columns)
 
 
-def implement(args):
-    if args.test:
+def single_gp(seed):
+    """
+    generate a single tree using gp
+
+    :param seed: seed used for random
+    :type seed: int
+    :return: fitness scores
+    :rtype: float
+    """
+    train = DATA.sample(frac=0.8).reset_index(drop=True)
+    test = DATA.drop(train.index)
+
+    weights = [0.5, 0.5, 0.]
+    res_tree = dt_gp(
+        train.drop(columns=LABELS), AUS_cat, train[LABELS], 8, 500, 0.3, 0.6, weights, 20, 10, False, seed)
+
+    labels = test[LABELS]
+    gen_labels = res_tree.classify(test.drop(columns=LABELS))
+
+    equal = gen_labels[gen_labels == labels]
+
+    result = []
+    for i in range(len(weights)-1):
+        result.append(len(equal[equal == i])/len(labels[labels==i]))
+
+    return result
+
+
+
+def implement(arguments):
+    """
+    main program implementation
+
+    :param arguments: optional arguments
+    :type arguments: dictionary
+    """
+    if arguments.test:
         # Kunnen we gebruiken om dingen te testen als we dat willen.
         print("This does nothing")
 
-    elif args.onegp:
-        # TODO: multiproc
+    elif arguments.onegp:
         print("Generating trees using random data")
+        runs = 10
+
+        # Specify seed, otherwise could go wrong using multiple threads
+        params = [(r.randrange(sys.maxsize)) for _ in range(runs)]
+
         results = []
-        n = 8
+        if arguments.multi:
+            results = process_map(single_gp, params)
+        else:
+            for func_param in tqdm(params):
+                results.append(single_gp(func_param))
 
-        for _ in range(n):
-            train = DATA.sample(frac=0.8).reset_index(drop=True)
-            test = DATA.drop(train.index)
-
-            weights = [0.5, 0.5, 0.]
-            res_tree = gp(train.drop(columns=LABELS), AUS_cat, train[LABELS], 8, 400, 0.3, 0.7, 20, 10, weights, True)
-            results.append(fitness(res_tree, test.drop(columns=LABELS), weights, test[LABELS]))
-        
         results = np.array(results)
-        print("mean: ", np.mean(results), "std: ", np.std(results), "for ", n, " runs")
+        print(f"mean: {np.mean(results, axis=0)} std: {np.std(results, axis=0)} for {runs} runs")
 
-    elif args.gridsearch:
-        print(f"first the optimalization for {args.gridsearch}:")
-        results = GRID_SEARCH[args.gridsearch](args.multi)
+    elif arguments.gridsearch:
+        print(f"first the optimalization for {arguments.gridsearch}:")
+        results = GRID_SEARCH[arguments.gridsearch](arguments.multi)
 
         results = sorted(results, key = lambda x: x[2], reverse=True)
         print("results (sorted on harmonic mean of TPR and TNR) found:")
         print(results)
 
     else:
-        gs.perform_gp(100, 8, 8, 400, 0.3, 0.7, 20, 10, [0.5, 0.5, 0.], args.multi)
+        gs.ensemble_learning(100, 8, 8, 400, 0.3, 0.7, [0.5, 0.5, 0.], 20, 10, args.multi)
 
 
 if __name__ == '__main__':

@@ -1,3 +1,6 @@
+"""
+Generate a decision tree on data using the dt_gp function
+"""
 import sys
 import random as r
 
@@ -29,9 +32,9 @@ class Tree:
             self.operator = operator # Operator
             self.value = value       # Data comparison value
             self.label = label       # classification label
-            self.parent = parent     # Tuple containing parent and childindex for efficiency (no eq function needed for crossover?)
+            self.parent = parent     # Tuple containing parent and childindex for efficiency
 
-            self.children = []       # Subtrees TODO: maak tuple, zodat je niet meer kinderen kan
+            self.children = []       # Subtrees
             if children is not None:
                 i = 0
                 for child in children:
@@ -44,10 +47,26 @@ class Tree:
             return "Tree: " + str(self.children[0])
 
         res = str(self.column) + " " + str(self.operator) + " " + str(self.value) + " "
-        c = [str(child) for child in self.children]
-        return res + f"[{', '.join(c)}]"
-    
+        children = [str(child) for child in self.children]
+        return res + f"[{', '.join(children)}]"
+
     def generate(self, data, cat, labels, depth, parent):
+        """
+        Generate a new Tree from this node
+
+        :param data: train data
+        :type data: dataframe
+        :param cat: categorical column indication
+        :type cat: dictionary
+        :param labels: labels this tree may use
+        :type labels: list
+        :param depth: maximum depth of this tree
+        :type depth: int
+        :param parent: parent tree
+        :type parent: tree
+        :return: generated tree
+        :rtype: tree
+        """
         self.parent = parent
         self.children = []
         if self not in self.parent[0].children:
@@ -73,6 +92,14 @@ class Tree:
         return self
 
     def classify(self, data):
+        """
+        Classify data given this tree
+
+        :param data: test data
+        :type data: dataframe
+        :return: classifications
+        :rtype: numpy array
+        """
         # This is a leaf, classify the data
         if self.operator == OPERATORS[0]:
             return np.array([self.label for _ in data.iterrows()])
@@ -81,41 +108,51 @@ class Tree:
             return self.children[0].classify(data)
 
         # Sort data in True or False for this statement
-        s = []
+        splitted_data = []
         if self.operator == OPERATORS[1]: # ==
-            s = (data[self.column] == self.value)
+            splitted_data = (data[self.column] == self.value)
         elif self.operator == OPERATORS[2]: # <
-            s = (data[self.column] < self.value)
+            splitted_data = (data[self.column] < self.value)
         elif self.operator == OPERATORS[3]: # >
-            s = (data[self.column] > self.value)
-        
-        s = np.array(s)
+            splitted_data = (data[self.column] > self.value)
+
+        splitted_data = np.array(splitted_data)
 
         # Classify data in subtrees
-        d_t = self.children[0].classify(data[s])
-        d_f = self.children[1].classify(data[~s])
+        d_t = self.children[0].classify(data[splitted_data])
+        d_f = self.children[1].classify(data[~splitted_data])
 
         # Build result by combining the results
-        t, f = 0, 0
+        r_t, r_f = 0, 0
         result = np.array([])
-        for i in s:
+        for i in splitted_data:
             if i:
-                result = np.append(result, d_t[t])
-                t += 1
+                result = np.append(result, d_t[r_t])
+                r_t += 1
             else:
-                result = np.append(result, d_f[f])
-                f += 1
+                result = np.append(result, d_f[r_f])
+                r_f += 1
 
         return result
 
     def choose(self, index):
-        # Return a Tree given the index
+        """
+        Select a tree given the index
+
+        :param index: index of subtree to select
+        :type index: int
+        :return: tree given the index
+        :rtype: tree
+        """
+        # Pass if root
         if self.operator == OPERATORS[4]:
             return self.children[0].choose(index)
 
+        # return self if leaf or index is 0
         if index == 0 or self.operator == OPERATORS[0]:
             return (self, index-1)
-    
+
+        # go through children and see if it returns index < 0
         res, index = self.children[0].choose(index-1)
         if index == -1:
             return (res, index)
@@ -123,17 +160,45 @@ class Tree:
         return self.children[1].choose(index)
 
     def depth(self):
+        """
+        Calculate the maximum depth of the tree
+
+        :return: depth
+        :rtype: int
+        """
         # Return the maximum depth of the tree
-        d = np.max([c.depth() for c in self.children], initial=0)
-        return d if self.operator == OPERATORS[4] else d + 1
-    
+        child_depth = np.max([c.depth() for c in self.children], initial=0)
+        return child_depth if self.operator == OPERATORS[4] else child_depth + 1
+
     def complexity(self):
+        """
+        Calculate the number of nodes within this tree
+
+        :return: number of nodes
+        :rtype: int
+        """
         # Return the number of nodes of the tree
-        c = np.sum([c.complexity() for c in self.children], initial=0)
-        return c if self.operator == OPERATORS[4] else c + 1
+        child_complexity = np.sum([c.complexity() for c in self.children], initial=0)
+        return child_complexity if self.operator == OPERATORS[4] else child_complexity + 1
 
 
 def generate_trees(data, cat, labels, number, max_initial_depth):
+    """
+    Generate multiple trees
+
+    :param data: train data
+    :type data: dataframe
+    :param cat: categorical column indication
+    :type cat: dictionary
+    :param labels: labels a tree may use
+    :type labels: list
+    :param number: number of trees
+    :type number: int
+    :param max_initial_depth: maximum depth of the trees
+    :type max_initial_depth: int
+    :return: trees
+    :rtype: list
+    """
     # generate a number of trees, with an initial maximum depth
     classifiers = list(set(labels))
     return [
@@ -141,47 +206,66 @@ def generate_trees(data, cat, labels, number, max_initial_depth):
         .generate(data, cat, classifiers, max_initial_depth, (Tree(operator=OPERATORS[4]),0))
         .parent[0] for _ in range(number)
         ]
-    
+
 
 def fitness(tree, data, labels, weights):
-    # Number of equal elements
-    # TODO FITNESS SHOULD TAKE DEPTH INTO ACCOUNT
-    gen_labels = tree.classify(data)
-    equal = gen_labels[gen_labels == labels]
-    TPR = len(equal[equal == 1])/len(labels[labels==1])
-    FNR = len(equal[equal == 0])/len(labels[labels==0])
-    depth_penalty = tree.depth()/(len(data.columns) - 1)
+    """
+    Calculate fitness for a tree
 
-    return TPR * weights[0] + FNR * weights[1] - depth_penalty * weights[2]
+    :param tree: tree
+    :type tree: tree
+    :param data: test data
+    :type data: dataframe
+    :param labels: labels this tree may use
+    :type labels: list
+    :param weights: importance for all classifications + depth penalty
+    :type weights: list
+    :return: fitness score
+    :rtype: float
+    """
+    gen_labels = tree.classify(data)
+
+    equal = gen_labels[gen_labels == labels]
+
+    result = 0.
+    for i in range(len(weights)-1):
+        result += len(equal[equal == i])/len(labels[labels==i])
+
+    depth_penalty = tree.depth()/(len(data.columns) - 1) * weights[-1]
+    return result - depth_penalty
 
 
 def crossover(tree1, tree2, max_depth=None):
+    """
+    Create 2 new trees, using the parents
+
+    :param tree1: parent tree 1
+    :type tree1: tree
+    :param tree2: parent tree 2
+    :type tree2: tree
+    :param max_depth: maximum depth of subtree to combine with child, defaults to None
+    :type max_depth: int, optional
+    :return: child trees
+    :rtype: tuple
+    """
     # Select Trees
-    r1, r2 = Tree(tree=tree1, parent=(Tree(operator=OPERATORS[4]),0)), Tree(tree=tree2, parent=(Tree(operator=OPERATORS[4]),0))
+    r_tree1 = Tree(tree=tree1, parent=(Tree(operator=OPERATORS[4]),0))
+    r_tree2 = Tree(tree=tree2, parent=(Tree(operator=OPERATORS[4]),0))
 
-    nodes1 = r1.complexity()
-    n1 = r.randrange(nodes1)
-    c_tree1, _ = r1.choose(n1)
-    # Tree should be within max_depth
-    # TODO remove ROOT? Does make crossover easier, but could be removed
-    i = 0
+    nodes1 = r_tree1.complexity()
+    rand_node1 = r.randrange(nodes1)
+    c_tree1, _ = r_tree1.choose(rand_node1)
+    # Subtree should be within max_depth
     while max_depth is not None and c_tree1.depth() > max_depth:
-        # print(f"{i}: {tree1} {tree2}")
-        # print(f"{c_tree1} , [{c_tree1.depth()}, {max_depth}]")
-        i += 1
-        n1 = r.randrange(nodes1)
-        c_tree1, _ = r1.choose(n1)
+        rand_node1 = r.randrange(nodes1)
+        c_tree1, _ = r_tree1.choose(rand_node1)
 
-    nodes2 = r2.complexity()
-    n2 = r.randrange(nodes2)
-    c_tree2, _ = r2.choose(n2)
-    i = 0
+    nodes2 = r_tree2.complexity()
+    rand_node2 = r.randrange(nodes2)
+    c_tree2, _ = r_tree2.choose(rand_node2)
     while max_depth is not None and c_tree2.depth() > max_depth:
-        # print(f"{i}: {tree1} {tree2}")
-        # print(f"{c_tree2} , [{c_tree2.depth()}, {max_depth}]")
-        i += 1
-        n2 = r.randrange(nodes2)
-        c_tree2, _ = r2.choose(n2)
+        rand_node2 = r.randrange(nodes2)
+        c_tree2, _ = r_tree2.choose(rand_node2)
 
     # Switch trees
     temp_parent1 = c_tree1.parent
@@ -193,30 +277,70 @@ def crossover(tree1, tree2, max_depth=None):
     temp_parent1[0].children[temp_parent1[1]] = c_tree2
     temp_parent2[0].children[temp_parent1[1]] = c_tree1
 
-    return r1, r2
+    return r_tree1, r_tree2
 
 
 def mutation(data, cat, labels, tree):
+    """
+    Mutate a new tree from a parent
+
+    :param data: train data
+    :type data: dataframe
+    :param cat: categorical column indication
+    :type cat: dictionary
+    :param labels: labels this tree may use
+    :type labels: list
+    :param tree: parent tree
+    :type tree: tree
+    :return: mutated tree
+    :rtype: tree
+    """
     # changed mutation to random subtree
-    rt = Tree(tree=tree, parent=(Tree(operator=OPERATORS[4]),0))
-    nodes = rt.complexity()
-    n = r.randrange(nodes)
-    c_tree, _ = rt.choose(n)
-    
+    r_tree = Tree(tree=tree, parent=(Tree(operator=OPERATORS[4]),0))
+    nodes = r_tree.complexity()
+    rand_node = r.randrange(nodes)
+    c_tree, _ = r_tree.choose(rand_node)
+
     classifiers = list(set(labels))
     c_tree.generate(data, cat, classifiers, c_tree.depth(), c_tree.parent)
-    return rt 
+    return r_tree
 
 
-def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, fit_weights, disp=False):
+def dt_gp(
+    data, cat, labels, generations, pop_size, mutation_rate,
+    cross_rate, fit_weights, max_depth=None, cross_max_depth=None, disp=False, seed=None):
     """
     GP algorithm for decision trees based on dataframe
 
-    data: NORMALIZED (because of random) dataframe containing the data FOR THIS GP
-    cat: dataframe containing booleans if label is categorical
-    labels: True results for each row in data
+    :param data: normalized dataframe containing the data for this GP
+    :type data: dataframe
+    :param cat: categorical column indication
+    :type cat: dictionary
+    :param labels: labels this gp may use
+    :type labels: list
+    :param generations: number of generations
+    :type generations: int
+    :param pop_size: number of trees in parent group
+    :type pop_size: int
+    :param mutation_rate: mutation rate
+    :type mutation_rate: float
+    :param cross_rate: crossover rate
+    :type cross_rate: float
+    :param max_depth: maximum depth of a tree
+    :type max_depth: int
+    :param cross_max_depth: maximum depth of subtree to combine with child
+    :type cross_max_depth: int
+    :param fit_weights: importance for all classifications + depth penalty
+    :type fit_weights: list
+    :param disp: print debug information, defaults to False
+    :type disp: bool, optional
+    :param seed: seed used for random
+    :type seed: int, optional
+    :return: best decision tree
+    :rtype: tree
     """
-    seed = r.randrange(sys.maxsize)
+    if seed is None:
+        seed = r.randrange(sys.maxsize)
     r.seed(seed)
     if disp:
         print("Seed was:", seed)
@@ -234,8 +358,8 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
         for parent in parents:
             if r.random() < mutation_rate:
                 # Mutation
-                p1 = mutation(data, cat, labels, parent)
-                parents2.append(p1)
+                child = mutation(data, cat, labels, parent)
+                parents2.append(child)
 
         parents.extend(parents2)
         scores.extend([fitness(p, data, labels, fit_weights) for p in parents2])
@@ -247,29 +371,27 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
             # Selection (Tournament)
             [pp1, pp2, pp3, pp4] = r.sample(list(range(len(parents))), k=4)
 
-            p1 = parents[pp1] if scores[pp1] < scores[pp2] else parents[pp2]
-            p2 = parents[pp3] if scores[pp3] < scores[pp4] else parents[pp4]
+            parent1 = parents[pp1] if scores[pp1] < scores[pp2] else parents[pp2]
+            parent2 = parents[pp3] if scores[pp3] < scores[pp4] else parents[pp4]
 
             # Crossover
-            c1, c2 = crossover(p1, p2, cross_max_depth)
-            if max_depth is None or c1.depth() < max_depth:
-                parents2.append(c1)
-            if max_depth is None or c2.depth() < max_depth:
-                parents2.append(c2)
+            child1, child2 = crossover(parent1, parent2, cross_max_depth)
+            if max_depth is None or child1.depth() < max_depth:
+                parents2.append(child1)
+            if max_depth is None or child2.depth() < max_depth:
+                parents2.append(child2)
 
         parents.extend(parents2)
         scores.extend([fitness(p, data, labels, fit_weights) for p in parents2])
 
         if disp:
             print("Selecting next generation...")
-        s = sorted(list(zip(parents, scores)), key=lambda x: x[1], reverse=True)
+        patents_sort = sorted(list(zip(parents, scores)), key=lambda x: x[1], reverse=True)
 
         if disp:
-            print(f"Best fitness {i}: {s[0][1]}")
-        if disp:
-            print(s[0][0])
+            print(f"Best fitness {i}: {patents_sort[0][1]}")
+            print(patents_sort[0][0])
 
-        parents, scores = map(list,zip(*s[:100])) # Next generation
-    
+        parents, scores = map(list,zip(*patents_sort[:pop_size])) # Next generation
+
     return parents[0]
-# TODO: Clean up code
