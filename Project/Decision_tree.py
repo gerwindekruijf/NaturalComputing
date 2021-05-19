@@ -1,8 +1,8 @@
-import numpy as np
-import pandas as pd
-import random as r
-from tqdm import tqdm
 import sys
+import random as r
+
+import numpy as np
+from tqdm import tqdm
 
 # ROOT is the first node of a tree
 OPERATORS = ['leaf', '<', '>', '==', 'ROOT']
@@ -11,7 +11,7 @@ class Tree:
     """
     A Tree contains a label, operator and value
     """
-    def __init__(self, label=None, children=[], parent=(None,0), operator=None, value=None, column=None, tree=None):
+    def __init__(self, label=None, children=None, parent=(None,0), operator=None, value=None, column=None, tree=None):
         if tree is not None:
             self.operator = tree.operator
             self.column = tree.column
@@ -24,7 +24,7 @@ class Tree:
             for child in tree.children:
                 self.children.append(Tree(tree=child,parent=(self,i)))
 
-        else:        
+        else:
             self.column = column     # Data column for this node
             self.operator = operator # Operator
             self.value = value       # Data comparison value
@@ -32,9 +32,10 @@ class Tree:
             self.parent = parent     # Tuple containing parent and childindex for efficiency (no eq function needed for crossover?)
 
             self.children = []       # Subtrees TODO: maak tuple, zodat je niet meer kinderen kan
-            i = 0
-            for child in children:
-                self.children.append(Tree(tree=child,parent=(self,i)))
+            if children is not None:
+                i = 0
+                for child in children:
+                    self.children.append(Tree(tree=child,parent=(self,i)))
 
     def __str__(self):
         if self.operator == OPERATORS[0]:
@@ -48,6 +49,7 @@ class Tree:
     
     def generate(self, data, cat, labels, depth, parent):
         self.parent = parent
+        self.children = []
         if self not in self.parent[0].children:
             self.parent[0].children.append(self)
         self.operator = r.choice(OPERATORS[0:4])
@@ -141,7 +143,7 @@ def generate_trees(data, cat, labels, number, max_initial_depth):
         ]
     
 
-def fitness(tree, data, labels, weights = [float(1/2), float(1/2), float(0)]):
+def fitness(tree, data, labels, weights):
     # Number of equal elements
     # TODO FITNESS SHOULD TAKE DEPTH INTO ACCOUNT
     gen_labels = tree.classify(data)
@@ -162,14 +164,22 @@ def crossover(tree1, tree2, max_depth=None):
     c_tree1, _ = r1.choose(n1)
     # Tree should be within max_depth
     # TODO remove ROOT? Does make crossover easier, but could be removed
-    while c_tree1.parent[0] is None or max_depth is not None and c_tree1.depth() > max_depth:
+    i = 0
+    while max_depth is not None and c_tree1.depth() > max_depth:
+        # print(f"{i}: {tree1} {tree2}")
+        # print(f"{c_tree1} , [{c_tree1.depth()}, {max_depth}]")
+        i += 1
         n1 = r.randrange(nodes1)
         c_tree1, _ = r1.choose(n1)
 
     nodes2 = r2.complexity()
     n2 = r.randrange(nodes2)
     c_tree2, _ = r2.choose(n2)
-    while c_tree2.parent[0] is None or max_depth is not None and c_tree2.depth() > max_depth:
+    i = 0
+    while max_depth is not None and c_tree2.depth() > max_depth:
+        # print(f"{i}: {tree1} {tree2}")
+        # print(f"{c_tree2} , [{c_tree2.depth()}, {max_depth}]")
+        i += 1
         n2 = r.randrange(nodes2)
         c_tree2, _ = r2.choose(n2)
 
@@ -198,7 +208,7 @@ def mutation(data, cat, labels, tree):
     return rt 
 
 
-def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, fit_weights = [float(1/2), float(1/2), float(0)], disp=False):
+def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_depth, cross_max_depth, fit_weights, disp=False):
     """
     GP algorithm for decision trees based on dataframe
 
@@ -207,7 +217,7 @@ def gp(data, cat, labels, generations, pop_size, mutation_rate, cross_rate, max_
     labels: True results for each row in data
     """
     seed = r.randrange(sys.maxsize)
-    rng = r.seed(seed)
+    r.seed(seed)
     if disp:
         print("Seed was:", seed)
 
