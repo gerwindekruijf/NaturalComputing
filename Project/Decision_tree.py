@@ -229,7 +229,7 @@ def fitness(tree, data, labels, weights):
 
     result = 0.
     for i in range(len(weights)-1):
-        result += len(equal[equal == i])/len(labels[labels==i])
+        result += len(equal[equal == i])/len(labels[labels==i]) * weights[i]
 
     depth_penalty = tree.depth()/(len(data.columns) - 1) * weights[-1]
     return result - depth_penalty

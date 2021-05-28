@@ -5,27 +5,15 @@ from multiprocessing import Pool
 import sys
 import random as r
 
-import pandas as pd
 import numpy as np
 from scipy import stats
 from tqdm import tqdm
 
 from decision_tree import dt_gp
-
-AUS_columns = ['A1','A2','A3','A4','A5','A6','A7','A8','A9','A10','A11','A12','A13','A14','A15']
-AUS_cat = dict(zip(AUS_columns, [1,0,0,1,1,1,0,1,1,0,1,1,0,0,1]))
-with open(r"australian/australian.dat", 'r') as f:
-    DATA = pd.DataFrame(
-        [
-            [(float(token) if '−' not in token else -float(token[1:])) for token in line.split()]
-            for line in f.readlines()
-            ],
-        columns=AUS_columns)
-LABELS = 'A15'
-
+from data import DATA, LABEL, CATS, sample_data, train_test_data
 
 def ensemble_learning(
-    sample_size=100, learners=8, generations=8, pop_size=500, mut_rate=0.3, cross_rate=0.6,
+    sample_size=1800, learners=8, generations=8, pop_size=500, mut_rate=0.3, cross_rate=0.6,
     fit_weights=None, max_depth=16, cross_md=9, multi_proc=False):
     """
     Ensemble learning algorithm
@@ -57,11 +45,14 @@ def ensemble_learning(
     if fit_weights is None:
         fit_weights = [0.5, 0.5, 0.]
 
-    dfs = [DATA.sample(sample_size).reset_index(drop=True) for _ in range(learners)]
+    train, test = train_test_data(DATA)
+
+    dfs = sample_data(train, learners, sample_size)
+    #[DATA.sample(sample_size).reset_index(drop=True) for _ in range(learners)]
 
     # Specify seed, otherwise could go wrong using multiple threads
     params = [
-        (data.drop(columns=LABELS), AUS_cat, data[LABELS], generations, pop_size,
+        (data.drop(columns=LABEL), CATS, data[LABEL], generations, pop_size,
         mut_rate, cross_rate, fit_weights, max_depth, cross_md, False, r.randrange(sys.maxsize)) for data in dfs]
     res = []
     if multi_proc:
@@ -71,8 +62,20 @@ def ensemble_learning(
         for func_param in tqdm(params):
             res.append(dt_gp(*func_param))
 
-    labels = DATA[LABELS].to_numpy()
-    res_class = np.array([tree.classify(DATA) for tree in res])
+    labels = test[LABEL].to_numpy()
+
+    # res_class = []
+    # if multi_proc:
+    #     with Pool() as pool:
+    #         def temp(tree):
+    #             return tree.classify(DATA)
+    #         res_class.append(pool.map(temp, tqdm(res, total=len(res))))
+    # else:
+    #     for tree in tqdm(res):
+    #         res_class.append(tree.classify(DATA))
+    # res_class = np.array(res_class)
+
+    res_class = np.array([tree.classify(test) for tree in tqdm(res)])
     ensemble = np.array(stats.mode(res_class))[0]
 
     equal = ensemble[ensemble == labels]
@@ -133,8 +136,8 @@ def gs_depth(multi_proc):
     :rtype: list
     """
     results=[]
-    for max_depth in range(15, 25):
-        for cross_md in range(5, 10):
+    for max_depth in range(10, 31, 10):
+        for cross_md in range(5, 16, 5):
             print(f"Performing GP + ensemble for normal values, max_depth: {max_depth} and cross_depth: {cross_md}")
             t_rates = ensemble_learning(max_depth=max_depth, cross_md=cross_md, multi_proc=multi_proc)
             h_mean = stats.hmean(t_rates)
@@ -153,8 +156,8 @@ def gs_pop(multi_proc):
     :rtype: list
     """
     results=[]
-    for generation in range(5, 15):
-        for pop_size in range(200, 800, 100):
+    for generation in range(5, 16, 5):
+        for pop_size in range(200, 601, 200):
             print(f"Performing GP + ensemble for normal values, generation: {generation} and pop_size: {pop_size}")
             t_rates = ensemble_learning(generations=generation, pop_size=pop_size, multi_proc=multi_proc)
             h_mean = stats.hmean(t_rates)
@@ -173,8 +176,8 @@ def gs_rates(multi_proc):
     :rtype: list
     """
     results=[]
-    for mutation in range(0, 51, 10):
-        for crossover in range(50, 91, 10):
+    for mutation in range(0, 51, 25):
+        for crossover in range(50, 91, 20):
             mut_rate = float(mutation)/100
             cross_rate = float(crossover)/100
             print(f"Performing GP + ensemble for normal values, mut_rate: {mut_rate} and cross_rate: {cross_rate}")
@@ -195,8 +198,10 @@ def gs_learners(multi_proc):
     :rtype: list
     """
     results=[]
-    for learners in range(5, 11):
-        for sample_size in range(100, 401, 100):
+    # TODO, deze maar dan met alle waardes van de label=1
+    # TODO, Miss ook een paar over alle train data
+    for learners in range(5, 16, 5):
+        for sample_size in range(1000, 5001, 2000):
             print(f"Performing GP + ensemble for normal values, learners: {learners} and sample_size: {sample_size}")
             t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc)
             h_mean = stats.hmean(t_rates)

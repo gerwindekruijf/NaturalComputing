@@ -5,46 +5,22 @@ import argparse
 import sys
 import random as r
 
-import pandas as pd
 import numpy as np
-from sklearn import preprocessing
 from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
 
 from decision_tree import dt_gp
-from grid_search import AUS_cat, LABELS, DATA
+from data import CATS, LABEL, DATA, norm, random_forest, train_test_data
 import grid_search as gs
 
 
 GRID_SEARCH = {
-    "fitness_weights": gs.gs_weights,
-    "depth": gs.gs_depth,
-    "population": gs.gs_pop,
-    "rates": gs.gs_rates,
-    "learners": gs.gs_learners,
+    "fitness_weights": gs.gs_weights,   # weights
+    "depth": gs.gs_depth,               # maximum depth and cross rate depth
+    "population": gs.gs_pop,            # number of generations and population
+    "rates": gs.gs_rates,               # corssover and mutation rate
+    "learners": gs.gs_learners,         # learners is ensemble and sample size
 }
-# TODO: optimalizatie voor: 1. Max_depth samen met cross_depth
-#                           2. Generaties samen met learners en pop
-#                               COMMENTAAR: HEB LEARNERS WEGGELATEN, leek overbodig
-#                           3. Cros_rate en mut_rate
-#                           4. Learners (optimale waarde uit 2. iig in gebruiken) en sample_size
-#                               COMMENTAAR: geen optimale waarde uit 2 :(
-#         (runnen proberen onder het uur te houden, elke run is ongeveer 1 minuut)
-
-
-def norm(data):
-    """
-    normalize data
-
-    :param data: data
-    :type data: dataframe
-    :return: data
-    :rtype: dataframe
-    """
-    values = data.values #returns a numpy array
-    min_max_scaler = preprocessing.MinMaxScaler()
-    values_scaled = min_max_scaler.fit_transform(values)
-    return pd.DataFrame(values_scaled, columns=data.columns)
 
 
 def single_gp(seed):
@@ -56,15 +32,14 @@ def single_gp(seed):
     :return: fitness scores
     :rtype: float
     """
-    train = DATA.sample(frac=0.8).reset_index(drop=True)
-    test = DATA.drop(train.index)
+    train, test = train_test_data(DATA)
 
     weights = [0.5, 0.5, 0.]
     res_tree = dt_gp(
-        train.drop(columns=LABELS), AUS_cat, train[LABELS], 8, 500, 0.3, 0.6, weights, 20, 10, False, seed)
+        train.drop(columns=LABEL), CATS, train[LABEL], 8, 500, 0.3, 0.6, weights, 20, 10, False, seed)
 
-    labels = test[LABELS]
-    gen_labels = res_tree.classify(test.drop(columns=LABELS))
+    labels = test[LABEL]
+    gen_labels = res_tree.classify(test.drop(columns=LABEL))
 
     equal = gen_labels[gen_labels == labels]
 
@@ -73,7 +48,6 @@ def single_gp(seed):
         result.append(len(equal[equal == i])/len(labels[labels==i]))
 
     return result
-
 
 
 def implement(arguments):
@@ -85,7 +59,9 @@ def implement(arguments):
     """
     if arguments.test:
         # Kunnen we gebruiken om dingen te testen als we dat willen.
-        print("This does nothing")
+        print("This does something ;)")
+        random_forest()
+        # gs.ensemble_learning(1800, 8, 8, 400, 0.3, 0.7, [0.8, 0.2, 0.], 20, 10, args.multi)
 
     elif arguments.onegp:
         print("Generating trees using random data")
@@ -118,6 +94,7 @@ def implement(arguments):
 
 if __name__ == '__main__':
     DATA = norm(DATA)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--test", action="store_true",
                         help="testing possibility")
