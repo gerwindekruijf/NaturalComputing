@@ -10,7 +10,7 @@ from tqdm.contrib.concurrent import process_map
 from tqdm import tqdm
 
 from decision_tree import dt_gp
-from data import CATS, LABEL, DATA, norm, random_forest, train_test_data
+from data import CATS, LABEL, DATA, norm, train_test_data
 import grid_search as gs
 
 
@@ -60,8 +60,8 @@ def implement(arguments):
     if arguments.test:
         # Kunnen we gebruiken om dingen te testen als we dat willen.
         print("This does something ;)")
-        random_forest()
-        # gs.ensemble_learning(1800, 8, 8, 400, 0.3, 0.7, [0.8, 0.2, 0.], 20, 10, args.multi)
+        # random_forest()
+        gs.ensemble_learning(multi_proc=args.multi)
 
     elif arguments.onegp:
         print("Generating trees using random data")
@@ -81,10 +81,10 @@ def implement(arguments):
         print(f"mean: {np.mean(results, axis=0)} std: {np.std(results, axis=0)} for {runs} runs")
 
     elif arguments.gridsearch:
-        print(f"first the optimalization for {arguments.gridsearch}:")
+        print(f"grid search for {arguments.gridsearch}:")
         results = GRID_SEARCH[arguments.gridsearch](arguments.multi)
 
-        results = sorted(results, key = lambda x: x[2], reverse=True)
+        results = sorted(results, key = lambda x: x[2], reverse=True) # TODO change to x[1]
         print("results (sorted on harmonic mean of TPR and TNR) found:")
         print(results)
 

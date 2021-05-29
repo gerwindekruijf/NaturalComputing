@@ -12,9 +12,10 @@ from tqdm import tqdm
 from decision_tree import dt_gp
 from data import DATA, LABEL, CATS, sample_data, train_test_data
 
+# TODO run baseline
 def ensemble_learning(
     sample_size=1800, learners=8, generations=8, pop_size=500, mut_rate=0.3, cross_rate=0.6,
-    fit_weights=None, max_depth=16, cross_md=9, multi_proc=False):
+    fit_weights=None, max_depth=16, cross_md=9, multi_proc=False, use_all_labels=False):
     """
     Ensemble learning algorithm
 
@@ -47,7 +48,7 @@ def ensemble_learning(
 
     train, test = train_test_data(DATA)
 
-    dfs = sample_data(train, learners, sample_size)
+    dfs = sample_data(train, learners, sample_size, use_all_labels)
     #[DATA.sample(sample_size).reset_index(drop=True) for _ in range(learners)]
 
     # Specify seed, otherwise could go wrong using multiple threads
@@ -198,12 +199,12 @@ def gs_learners(multi_proc):
     :rtype: list
     """
     results=[]
-    # TODO, deze maar dan met alle waardes van de label=1
+    # TODO, deze maar dan met alle waardes van de label=1, zelfde aantal negatives
     # TODO, Miss ook een paar over alle train data
     for learners in range(5, 16, 5):
         for sample_size in range(1000, 5001, 2000):
             print(f"Performing GP + ensemble for normal values, learners: {learners} and sample_size: {sample_size}")
-            t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc)
+            t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc, use_all_labels=True)
             h_mean = stats.hmean(t_rates)
             results.append((t_rates, h_mean, [learners, sample_size]))
 
