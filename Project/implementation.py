@@ -61,7 +61,8 @@ def implement(arguments):
         # Kunnen we gebruiken om dingen te testen als we dat willen.
         print("This does something ;)")
         # random_forest()
-        gs.ensemble_learning(multi_proc=args.multi)
+        # gs.ensemble_learning(multi_proc=args.multi)
+        gs.ensemble_learning(3000, 15, 10, 200, 0.25, 0.5, [0.5,0.5,0.1], 10, 5, args.multi, True)
 
     elif arguments.onegp:
         print("Generating trees using random data")

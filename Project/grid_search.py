@@ -204,7 +204,7 @@ def gs_learners(multi_proc):
     for learners in range(5, 16, 5):
         for sample_size in range(1000, 5001, 2000):
             print(f"Performing GP + ensemble for normal values, learners: {learners} and sample_size: {sample_size}")
-            t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc, use_all_labels=True)
+            t_rates = ensemble_learning(learners=learners, sample_size=sample_size, multi_proc=multi_proc, use_all_labels=False)
             h_mean = stats.hmean(t_rates)
             results.append((t_rates, h_mean, [learners, sample_size]))
 
