@@ -58,11 +58,15 @@ def implement(arguments):
     :type arguments: dictionary
     """
     if arguments.test:
-        # Kunnen we gebruiken om dingen te testen als we dat willen.
+        # Used for testing
         print("This does something ;)")
         # random_forest()
+        
         # gs.ensemble_learning(multi_proc=args.multi)
-        gs.ensemble_learning(3000, 15, 10, 200, 0.25, 0.5, [0.5,0.5,0.1], 10, 5, args.multi, True)
+
+        # Optimal settings
+        for _ in range(3):
+            gs.ensemble_learning(3000, 1, 10, 200, 0.25, 0.5, [0.5,0.5,0.1], 10, 5, args.multi, True)
 
     elif arguments.onegp:
         print("Generating trees using random data")
@@ -85,7 +89,7 @@ def implement(arguments):
         print(f"grid search for {arguments.gridsearch}:")
         results = GRID_SEARCH[arguments.gridsearch](arguments.multi)
 
-        results = sorted(results, key = lambda x: x[2], reverse=True) # TODO change to x[1]
+        results = sorted(results, key = lambda x: x[1], reverse=True)
         print("results (sorted on harmonic mean of TPR and TNR) found:")
         print(results)
 
