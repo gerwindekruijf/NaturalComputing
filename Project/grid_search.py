@@ -48,7 +48,6 @@ def ensemble_learning(
     train, test = train_test_data(DATA)
 
     dfs = sample_data(train, learners, sample_size, use_all_labels)
-    #[DATA.sample(sample_size).reset_index(drop=True) for _ in range(learners)]
 
     # Specify seed, otherwise could go wrong using multiple threads
     params = [
@@ -63,17 +62,6 @@ def ensemble_learning(
             res.append(dt_gp(*func_param))
 
     labels = test[LABEL].to_numpy()
-
-    # res_class = []
-    # if multi_proc:
-    #     with Pool() as pool:
-    #         def temp(tree):
-    #             return tree.classify(DATA)
-    #         res_class.append(pool.map(temp, tqdm(res, total=len(res))))
-    # else:
-    #     for tree in tqdm(res):
-    #         res_class.append(tree.classify(DATA))
-    # res_class = np.array(res_class)
 
     res_class = np.array([tree.classify(test) for tree in tqdm(res)])
     ensemble = np.array(stats.mode(res_class))[0]
