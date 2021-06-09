@@ -20,7 +20,7 @@ The other parameters and arguments given within usage determine the workings of 
 - -og/--onegp: If used turns off the ensemble learning method and performs only genetic programming to learn a decision tree for a 80/20 split of the training data and subsequently performs statistical analysis.
 - -gs/--gridsearch: If used performs a grid search optimization for the, to be included specified part, of the implementation. Specified parts are: fitness_weights, depth, population, rates and learners.
 ### Examples
-Some example lines to use the code are given:
+Some example lines to use the implemenation are given:
 
 ```cmd
   implementation.py --multi
@@ -34,4 +34,4 @@ In order to run the implemenation using specified hyperparameters for the geneti
 ```cmd
   implementation.py
 ``` 
-And change the parameters at line 97 of implementation.py
+And (for both options) change the parameters at line 97 of implementation.py
