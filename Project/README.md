@@ -18,7 +18,7 @@ The other parameters and arguments given within usage determine the workings of 
 - -t/--test: If used gives the possibility to test, within implementation.py specified, parts of the implementation.
 - -m/--multi: If used turns on multicore learning of the learners.
 - -og/--onegp: If used turns off the ensemble learning method and performs only genetic programming to learn a decision tree for a 80/20 split of the training data and subsequently performs statistical analysis.
-- -gs/--gridsearch: If used performs a grid search optimization for the, to be included specified part, of the implementation. Specified parts are: fitness_weights, depth, population, rates and learners.
+- -gs/--gridsearch: If used performs a grid search optimization for the, to be specified part, of the implementation. Specified parts are: fitness_weights, depth, population, rates and learners.
 ### Examples
 Some example lines to use the implemenation are given:
 
