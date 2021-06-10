@@ -1,10 +1,12 @@
 # Acquiring the data:
 ### Statlog (Australian Credit Approval) Data Set 
 The data can be found in our repository in the folder "australian", or via the following link: http://archive.ics.uci.edu/ml/datasets/statlog+(australian+credit+approval)
+
 The data contains 690 rows and has 14 attributes.
 
 ### Credit Card Fraud Detection data from Kaggle
 The data can be found at: https://www.kaggle.com/mlg-ulb/creditcardfraud/metadata 
+
 The file needed is creditcard.csv, it contains 284804 rows and has 31 attributes.
 
 # Learning a random forest with Genetic Programming
