@@ -1,4 +1,4 @@
-# Acquiring the data:
+# Acquiring the data
 ### Statlog (Australian Credit Approval) Data Set 
 The data can be found in our repository in the folder "australian", or via the following link: http://archive.ics.uci.edu/ml/datasets/statlog+(australian+credit+approval)
 
